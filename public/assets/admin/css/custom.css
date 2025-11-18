@@ -1,0 +1,158 @@
+.custom-file-upload {
+    display: inline-block;
+    cursor: pointer;
+    color: #fff;
+    background-color: #007bff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.custom-file-upload:hover {
+    background-color: #0056b3;
+}
+
+#category-image {
+    display: none; 
+}
+
+#product-images, .product-images {
+    display: none; 
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    margin-top: 10px;
+    border: 2px solid #007bff;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.disabled-panel {
+    opacity: 0.6 !important;
+    cursor: not-allowed;
+    pointer-events: none !important;
+}
+
+.btn-update-category, .btn-update-product{
+    color: green !important;
+}
+
+.btn-delete-category, .btn-delete-product{
+    color: red !important;
+}
+
+.category-image {
+    display: none;
+}
+
+.custom-badge {
+    padding: 10px 5px;
+}
+
+.profile_details {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.profile_view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    border-radius: 10px;
+}
+
+.user-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.user-box .left {
+    flex: 1;
+    min-width: 200px;
+}
+
+.user-box .right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.avatar-img {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .user-box {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .user-box .right {
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .avatar-img {
+        width: 70px !important;
+        height: 70px !important;
+    }
+}
+
+.profile_view .bottom {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.profile_view p {
+    margin-bottom: 4px !important;
+}
+
+.profile_view ul {
+    margin-top: 0 !important;
+}
+
+.left h4 {
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #555;
+}
+
+
+.user-info-list li {
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.user-info-list li i {
+    width: 18px;
+    color: #007bff; 
+}
+
+.ck-editor__editable img {
+    max-width: 200px !important;
+    height: auto;
+    display: block;
+    margin: 10px auto;
+}
+
+/* .btn-toggle-status {
+    width: 90px;
+    text-transform: capitalize;
+} */

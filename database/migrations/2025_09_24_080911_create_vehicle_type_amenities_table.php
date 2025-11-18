@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('vehicle_type_amenities', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('vehicle_type_id')->constrained('vehicle_types')->onDelete('cascade');
+            $table->foreignId('amenity_id')->constrained('amenities')->onDelete('cascade');
+            $table->decimal('extra_cost', 10, 2)->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('vehicle_type_amenities');
+    }
+};
