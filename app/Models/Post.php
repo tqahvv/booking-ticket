@@ -20,7 +20,6 @@ class Post extends Model
         'image_url',
         'user_id',
         'status',
-        'reading_time',
         'published_at',
     ];
 

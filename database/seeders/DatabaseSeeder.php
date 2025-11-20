@@ -29,9 +29,10 @@ class DatabaseSeeder extends Seeder
             // RolePermissionSeeder::class,
             // UserSeeder::class,
             // ImageSeeder::class,
-            CategoryTableSeeder::class,
-            PostTableSeeder::class,
-            PostCategoryTableSeeder::class,
+            // CategoryTableSeeder::class,
+            // PostTableSeeder::class,
+            // PostCategoryTableSeeder::class,
+            ScheduleTemplateSeeder::class,
         ]);
     }
 }

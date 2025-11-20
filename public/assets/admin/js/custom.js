@@ -103,6 +103,36 @@ $(document).ready(function () {
         });
     });
 
+    $(document).on("click", ".btn-delete-post", function () {
+        let id = $(this).data("id");
+        let row = $(this).closest("tr");
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+
+        if (!confirm("Bạn có chắc chắn muốn xóa bài viết này?")) {
+            return;
+        }
+
+        $.ajax({
+            url: "/admin/posts/" + id,
+            type: "POST",
+            success: function (res) {
+                if (res.status === "success") {
+                    row.fadeOut(300, function () {
+                        $(this).remove();
+                    });
+                }
+            },
+            error: function () {
+                alert("Đã xảy ra lỗi. Không thể xóa bài viết.");
+            },
+        });
+    });
+
     $(document).on("click", ".btn-toggle-status", function () {
         let id = $(this).data("id");
         let button = $(this);

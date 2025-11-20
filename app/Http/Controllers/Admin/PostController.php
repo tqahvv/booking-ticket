@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -71,15 +72,73 @@ class PostController extends Controller
             $file = $request->file('upload');
             $filename = time() . '-' . $file->getClientOriginalName();
 
-            // Lưu vào public disk
             $path = $file->storeAs('uploads/ckeditor', $filename, 'public');
 
-            // CKEditor 5 yêu cầu trả về "default"
             return response()->json([
                 'default' => asset('storage/' . $path)
             ]);
         }
 
         return response()->json([], 400);
+    }
+
+    public function addPost(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'excerpt' => 'required|string',
+            'content' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
+            'images' => 'nullable|image|mimes:jpg,jpeg,png,webp',
+        ]);
+
+        $slug = Str::slug($request->title);
+
+        $originalSlug = $slug;
+        $count = 1;
+        while (Post::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count++;
+        }
+
+        $content = $request->input('content');
+
+        $imagePath = null;
+        if ($request->hasFile('images')) {
+            $filename = time() . '-' . $request->images->getClientOriginalName();
+            $imagePath = $request->images->storeAs('uploads/images', $filename, 'public');
+        }
+
+        $post = Post::create([
+            'title'        => $request->input('title'),
+            'slug'         => $slug,
+            'excerpt'      => $request->input('excerpt'),
+            'content'      => $content,
+            'image_url'    => $imagePath,
+            'user_id'      => Auth::id(),
+            'status'       => 'draft',
+            'published_at' => now(),
+        ]);
+
+        $post->categories()->sync([$request->category_id]);
+
+        return redirect()
+            ->route('admin.posts.index')
+            ->with('success', 'Thêm bài viết thành công!');
+    }
+
+    public function delete($id)
+    {
+        $post = Post::findOrFail($id);
+
+        if ($post->image_url && file_exists(public_path($post->image_url))) {
+            unlink(public_path($post->image_url));
+        }
+
+        $post->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Xóa bài viết thành công'
+        ]);
     }
 }

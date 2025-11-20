@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('origin_location_id')->constrained('locations')->onDelete('cascade');
             $table->foreignId('destination_location_id')->constrained('locations')->onDelete('cascade');
             $table->foreignId('operator_id')->constrained('operators')->onDelete('cascade');
-            $table->string('name');
             $table->integer('distance')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
