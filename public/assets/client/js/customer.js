@@ -260,4 +260,190 @@ $(document).ready(function () {
         $("#fromCity").val(t);
         $("#toCity").val(f);
     });
+
+    document.querySelectorAll(".trip-card").forEach((card) => {
+        const featureBtn = card.querySelector(".footer-btn.featured");
+        const routeBtn = card.querySelector(".route-btn");
+        const extraBox = card.querySelector(".trip-extra");
+
+        const featureContent = card.querySelector(".features-content");
+        const routeContent = card.querySelector(".route-content");
+
+        featureBtn.addEventListener("click", () => {
+            extraBox.style.display = "block";
+            featureContent.style.display = "block";
+            routeContent.style.display = "none";
+
+            featureBtn.classList.add("active");
+            routeBtn.classList.remove("active");
+        });
+
+        routeBtn.addEventListener("click", () => {
+            extraBox.style.display = "block";
+            featureContent.style.display = "none";
+            routeContent.style.display = "block";
+
+            routeBtn.classList.add("active");
+            featureBtn.classList.remove("active");
+        });
+    });
+
+    function updateSummary() {
+        let pickup = $('input[name="pickup_id"]:checked');
+        let dropoff = $('input[name="dropoff_id"]:checked');
+
+        if (pickup.length) {
+            let name = pickup
+                .closest(".location-item-updated")
+                .data("location-name");
+            $("#summary-pickup-name").text(name);
+        }
+
+        if (dropoff.length) {
+            let name = dropoff
+                .closest(".location-item-updated")
+                .data("location-name");
+            $("#summary-dropoff-name").text(name);
+        }
+    }
+
+    updateSummary();
+
+    $(document).on(
+        "change",
+        'input[name="pickup_id"], input[name="dropoff_id"]',
+        updateSummary
+    );
+
+    $("#btn-choose-seat").on("click", function () {
+        let schedule_id = $(this).data("schedule");
+        let seatsNeeded = $(this).data("seats");
+
+        let pickup = $('input[name="pickup_id"]:checked').val();
+        let dropoff = $('input[name="dropoff_id"]:checked').val();
+
+        if (!pickup || !dropoff) {
+            alert("Vui lòng chọn điểm đón và điểm trả.");
+            return;
+        }
+
+        $.ajax({
+            url: "/booking/check-pickup",
+            type: "GET",
+            data: {
+                schedule_id: schedule_id,
+                pickup_id: pickup,
+                dropoff_id: dropoff,
+                seats: seatsNeeded,
+            },
+            success: function (res) {
+                if (res.status === "ok") {
+                    let url =
+                        `/booking/seat?schedule_id=${schedule_id}` +
+                        `&pickup_id=${pickup}` +
+                        `&dropoff_id=${dropoff}` +
+                        `&seats=${seatsNeeded}`;
+
+                    window.location.href = url;
+                } else {
+                    alert(res.message);
+                }
+            },
+            error: function () {
+                alert("Có lỗi xảy ra khi kiểm tra dữ liệu.");
+            },
+        });
+    });
+
+    // Bên trong $(document).ready(function() { ... })
+
+    const selectableUnits = document.querySelectorAll(
+        ".seat-only.available, .bed-item.available"
+    );
+    const summarySeatsElement = document.getElementById(
+        "summary-selected-seats"
+    );
+    const summaryTotalElement = document.getElementById("summary-total-fare");
+    const btnContinue = document.getElementById("btn-continue");
+
+    const basePrice = parseFloat(summaryTotalElement.dataset.basePrice || 0);
+    const maxSeats = parseInt(summaryTotalElement.dataset.maxSeats || 1);
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+        }).format(amount);
+    };
+
+    const updateSeatSummary = () => {
+        const selectedUnits = Array.from(
+            document.querySelectorAll(".seat-only.selected, .bed-item.selected")
+        ).map((unit) => unit.dataset.seat);
+
+        const count = selectedUnits.length;
+        const totalFare = count * basePrice;
+
+        btnContinue.disabled = count === 0;
+
+        if (count > 0) {
+            summarySeatsElement.textContent = selectedUnits.join(", ");
+            summarySeatsElement.classList.remove("text-danger");
+            summarySeatsElement.classList.add("text-primary");
+            summaryTotalElement.textContent = formatCurrency(totalFare);
+        } else {
+            summarySeatsElement.textContent = "Chưa chọn";
+            summarySeatsElement.classList.remove("text-primary");
+            summarySeatsElement.classList.add("text-danger");
+            summaryTotalElement.textContent = formatCurrency(0);
+        }
+    };
+
+    selectableUnits.forEach((unit) => {
+        unit.addEventListener("click", function () {
+            const currentlySelected = document.querySelectorAll(
+                ".seat-only.selected, .bed-item.selected"
+            );
+
+            if (
+                !this.classList.contains("selected") &&
+                currentlySelected.length >= maxSeats
+            ) {
+                return;
+            }
+
+            this.classList.toggle("selected");
+            updateSeatSummary();
+
+            const selectedSeats = Array.from(
+                document.querySelectorAll(
+                    ".seat-only.selected, .bed-item.selected"
+                )
+            ).map((el) => el.dataset.seat);
+
+            const scheduleIdInput = document.querySelector(
+                'input[name="schedule_id"]'
+            );
+            if (!scheduleIdInput) return;
+
+            fetch("/booking/update-selected-seats", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                },
+                body: JSON.stringify({
+                    schedule_id: scheduleIdInput.value,
+                    selected_seats: selectedSeats,
+                }),
+            })
+                .then((res) => res.json())
+                .then((data) => console.log("Seats updated", data))
+                .catch((err) => console.error(err));
+        });
+    });
+
+    updateSeatSummary();
 });

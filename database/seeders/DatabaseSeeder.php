@@ -32,7 +32,8 @@ class DatabaseSeeder extends Seeder
             // CategoryTableSeeder::class,
             // PostTableSeeder::class,
             // PostCategoryTableSeeder::class,
-            ScheduleTemplateSeeder::class,
+            // ScheduleTemplateSeeder::class,
+            VehicleSeatTemplateSeeder::class,
         ]);
     }
 }

@@ -36,4 +36,14 @@ class Route extends Model
     {
         return $this->hasMany(Stop::class);
     }
+
+    public function pickups()
+    {
+        return $this->hasMany(Stop::class)->where('is_pickup', 1);
+    }
+
+    public function dropoffs()
+    {
+        return $this->hasMany(Stop::class)->where('is_dropoff', 1);
+    }
 }

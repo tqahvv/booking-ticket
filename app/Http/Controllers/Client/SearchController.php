@@ -22,14 +22,12 @@ class SearchController extends Controller
 
         Carbon::setLocale('vi');
 
-        // Format ngày hiển thị
         $formattedDate = null;
         if ($date) {
             $formattedDate = Carbon::parse($date)->isoFormat('dddd, D MMMM YYYY');
             $formattedDate = mb_convert_case($formattedDate, MB_CASE_TITLE, "UTF-8");
         }
 
-        // Không nhập from/to => trả về trang
         if (!$from || !$to) {
             return view('client.pages.booking-home', [
                 'schedules' => collect(),
@@ -40,7 +38,6 @@ class SearchController extends Controller
             ]);
         }
 
-        // Tìm location
         $origin = Location::where('name', 'like', "%{$from}%")
             ->orWhere('city', 'like', "%{$from}%")
             ->first();
@@ -60,7 +57,6 @@ class SearchController extends Controller
             ]);
         }
 
-        // Lấy danh sách tuyến
         $routes = BusRoute::where('origin_location_id', $origin->id)
             ->where('destination_location_id', $destination->id)
             ->pluck('id');
@@ -76,11 +72,7 @@ class SearchController extends Controller
             ]);
         }
 
-        // ===============================
-        // 🔥 LẤY LỊCH TỪ SCHEDULE TEMPLATE
-        // ===============================
-
-        $weekday = Carbon::parse($date)->dayOfWeekIso; // 1=Mon -> 7=Sun
+        $weekday = Carbon::parse($date)->dayOfWeekIso;
 
         $templates = ScheduleTemplate::with(['route.origin', 'route.destination', 'operator', 'vehicleType'])
             ->whereHas('route.origin', function ($q) use ($origin) {
@@ -93,7 +85,6 @@ class SearchController extends Controller
             ->where('default_seats', '>=', $seats)
             ->get();
 
-        // Nếu không có template => không có chuyến
         if ($templates->isEmpty()) {
             return view('client.pages.booking-home', [
                 'schedules' => collect(),
@@ -106,14 +97,18 @@ class SearchController extends Controller
             ]);
         }
 
-        // ===============================
-        // 🔥 CHUYỂN TEMPLATE → CHUYẾN THỰC TẾ
-        // ===============================
-
         $schedules = $templates->map(function ($t) use ($date) {
 
             $departure = Carbon::parse($date . ' ' . $t->departure_time);
             $arrival = $departure->copy()->addMinutes($t->travel_duration_minutes);
+
+            $durationMinutes = $t->travel_duration_minutes;
+            $hours = floor($durationMinutes / 60);
+            $minutes = $durationMinutes % 60;
+            $durationText = $hours . ' giờ';
+            if ($minutes > 0) {
+                $durationText .= ' ' . $minutes . ' phút';
+            }
 
             return (object)[
                 "id" => $t->id,
@@ -124,6 +119,7 @@ class SearchController extends Controller
                 "seats_available" => $t->default_seats,
                 "departure_datetime" => $departure,
                 "arrival_datetime" => $arrival,
+                "duration" => $durationText,
             ];
         });
 

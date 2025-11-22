@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Client\AccountController;
 use App\Http\Controllers\Client\AuthController;
+use App\Http\Controllers\Client\BookingController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\LocationController;
 use App\Http\Controllers\Client\PostController;
@@ -29,5 +30,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/account', [AccountController::class, 'edit'])->name('account.edit');
     Route::post('/account/update', [AccountController::class, 'update'])->name('account.update');
 });
+
+Route::get('/booking/pickup', [BookingController::class, 'choosePickup'])->name('booking.pickup');
+Route::get('/booking/check-pickup', [BookingController::class, 'checkPickup'])->name('booking.checkPickup');
+Route::get('/booking/seat', [BookingController::class, 'chooseSeat'])->name('booking.seat');
+
+
 
 require __DIR__ . '/admin.php';
