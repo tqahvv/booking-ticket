@@ -233,30 +233,42 @@
                     <div class="order-summary-card shadow-sm">
                         <div class="order-summary-header">Thông tin chuyến đi</div>
                         <div class="order-summary-body">
+                            @php
+                                $pickup_name =
+                                    $schedule->route->pickups->firstWhere('id', $pickup_id)->location->name ?? '';
+                                $dropoff_name =
+                                    $schedule->route->dropoffs->firstWhere('id', $dropoff_id)->location->name ?? '';
+                            @endphp
+
+                            <input type="hidden" id="schedule_id" value="{{ request('schedule_id') }}">
+                            <input type="hidden" id="pickup_id" value="{{ request('pickup_id') }}">
+                            <input type="hidden" id="dropoff_id" value="{{ request('dropoff_id') }}">
+
                             <h5 class="fw-bold text-primary mb-2">{{ $schedule->operator->name }}</h5>
-                            <p class="text-muted small mb-3">Loại xe: <span
-                                    id="summary-bus-type">{{ $schedule->vehicleType->name }}</span></p>
+                            <p class="text-muted small mb-3">Loại xe:
+                                <span id="summary-bus-type">{{ $schedule->vehicleType->name }}</span>
+                            </p>
 
                             <div class="summary-item">
                                 <span class="fw-medium">Điểm đón:</span>
-                                <span class="fw-bold text-end">
-                                    {{ $schedule->route->pickups->firstWhere('id', $pickup_id)->location->name }}
-                                </span>
+                                <span id="summary-pickup-name" class="fw-bold text-end">{{ $pickup_name }}</span>
                             </div>
+
                             <div class="summary-item">
                                 <span class="fw-medium">Điểm trả:</span>
-                                <span class="fw-bold text-end">
-                                    {{ $schedule->route->dropoffs->firstWhere('id', $dropoff_id)->location->name }}
-                                </span>
+                                <span id="summary-dropoff-name" class="fw-bold text-end">{{ $dropoff_name }}</span>
                             </div>
+
                             <div class="summary-item">
                                 <span class="fw-medium">Ghế đã chọn:</span>
                                 <span id="summary-selected-seats" class="fw-bold text-danger text-end">Chưa chọn</span>
                             </div>
+
                             <div class="summary-item">
                                 <span class="fw-medium">Giá vé cơ bản:</span>
                                 <span class="fw-bold text-success">{{ number_format($basePrice, 0, ',', '.') }}VNĐ</span>
                             </div>
+
                             <div class="summary-item border-bottom-0 pt-3">
                                 <span class="fw-bold total-label">Tổng tiền:</span>
                                 <span id="summary-total-fare" class="fw-bolder text-danger total-amount"
@@ -264,8 +276,9 @@
                                     data-max-seats="{{ $maxSeats }}">{{ number_format($basePrice, 0, ',', '.') }}
                                     VNĐ</span>
                             </div>
+
                             <button type="button" class="btn btn-primary btn-lg fw-bold btn-continue-summary mt-3"
-                                disabled id="btn-continue">
+                                disabled id="btn-continue-booking">
                                 Tiếp tục
                             </button>
                         </div>

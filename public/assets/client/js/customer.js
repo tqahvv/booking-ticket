@@ -1,7 +1,9 @@
 $(document).ready(function () {
+    // ================================
+    // ĐĂNG KÝ & ĐĂNG NHẬP
+    // ================================
     $("#registerForm").on("submit", function (e) {
         e.preventDefault();
-
         $.ajax({
             url: "/register",
             method: "POST",
@@ -11,15 +13,12 @@ $(document).ready(function () {
                     icon: "success",
                     title: "Đăng ký thành công",
                     text: "Bạn có thể đăng nhập ngay bây giờ!",
-                }).then(() => {
-                    window.location.href = "/login";
-                });
+                }).then(() => (window.location.href = "/login"));
             },
             error: function (xhr) {
                 $(".text-danger").text("");
-                if (xhr.status === 422) {
-                    let errors = xhr.responseJSON.errors;
-                    $.each(errors, function (key, value) {
+                if (xhr.status === 422 && xhr.responseJSON.errors) {
+                    $.each(xhr.responseJSON.errors, function (key, value) {
                         $(".error-" + key).text(value[0]);
                     });
                 } else {
@@ -35,7 +34,6 @@ $(document).ready(function () {
 
     $("#loginForm").on("submit", function (e) {
         e.preventDefault();
-
         $.ajax({
             url: "/login",
             method: "POST",
@@ -46,46 +44,43 @@ $(document).ready(function () {
                     title: res.message || "Đăng nhập thành công",
                     timer: 1500,
                     showConfirmButton: false,
-                }).then(() => {
-                    window.location.href = "/";
-                });
+                }).then(() => (window.location.href = "/"));
             },
             error: function (xhr) {
-                $(".error-email").text("");
-                $(".error-password").text("");
-
+                $(".error-email, .error-password").text("");
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    let errors = xhr.responseJSON.errors;
-                    if (errors.email) {
-                        $(".error-email").text(errors.email[0]);
-                    }
-                    if (errors.password) {
-                        $(".error-password").text(errors.password[0]);
-                    }
+                    if (xhr.responseJSON.errors.email)
+                        $(".error-email").text(
+                            xhr.responseJSON.errors.email[0]
+                        );
+                    if (xhr.responseJSON.errors.password)
+                        $(".error-password").text(
+                            xhr.responseJSON.errors.password[0]
+                        );
                 }
             },
         });
     });
 
-    const logoutLink = document.getElementById("logout-link");
-    if (logoutLink) {
-        logoutLink.addEventListener("click", function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: "Bạn có chắc chắn muốn đăng xuất?",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Có, đăng xuất",
-                cancelButtonText: "Không",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById("logout-form").submit();
-                }
-            });
+    // ================================
+    // LOGOUT
+    // ================================
+    $("#logout-link").on("click", function (e) {
+        e.preventDefault();
+        Swal.fire({
+            title: "Bạn có chắc chắn muốn đăng xuất?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Có, đăng xuất",
+            cancelButtonText: "Không",
+        }).then((result) => {
+            if (result.isConfirmed) $("#logout-form").submit();
         });
-    }
+    });
 
-    // Câp nhật thông tin tài khoản
+    // ================================
+    // CẬP NHẬT PROFILE & AVATAR
+    // ================================
     $("#avatar").on("change", function () {
         const [file] = this.files;
         if (file) $("#avatar-preview").attr("src", URL.createObjectURL(file));
@@ -93,8 +88,7 @@ $(document).ready(function () {
 
     $("#profile-form").on("submit", function (e) {
         e.preventDefault();
-        let formData = new FormData(this);
-
+        var formData = new FormData(this);
         $.ajax({
             url: "/account/update",
             type: "POST",
@@ -104,22 +98,18 @@ $(document).ready(function () {
             beforeSend: function () {
                 $(".button-save").text("Đang lưu...").prop("disabled", true);
             },
-            success: function (response) {
+            success: function (res) {
                 Swal.fire({
                     icon: "success",
-                    title: response.message || "Cập nhật thành công!",
+                    title: res.message || "Cập nhật thành công!",
                     timer: 1500,
                     showConfirmButton: false,
-                }).then(() => {
-                    window.location.reload();
-                });
+                }).then(() => location.reload());
             },
             error: function (xhr) {
-                let msg = "Có lỗi xảy ra, vui lòng thử lại!";
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    msg = xhr.responseJSON.message;
-                }
-
+                var msg =
+                    xhr.responseJSON?.message ||
+                    "Có lỗi xảy ra, vui lòng thử lại!";
                 Swal.fire({
                     icon: "error",
                     title: "Thất bại",
@@ -133,38 +123,9 @@ $(document).ready(function () {
         });
     });
 
-    // =======================================================
-    // CHỨC NĂNG TÌM KIẾM XE KHÁCH
-    // =======================================================
-    function renderSuggestions(data, targetDiv) {
-        if (!Array.isArray(data)) data = [];
-        if (data.length === 0) {
-            $(targetDiv)
-                .html(
-                    '<div class="list-group"><div class="list-group-item muted">Không có kết quả</div></div>'
-                )
-                .show();
-            return;
-        }
-
-        let html = '<div class="list-group">';
-        data.forEach((loc) => {
-            let city = loc.city || "";
-            let province = loc.province || "";
-            let subtitle = `Tất cả các điểm lên xe ở ${city}`;
-
-            html += `<div class="list-group-item location-item" 
-                    data-name="${escapeHtml(city)}">
-                    <div style="font-weight:600">${escapeHtml(city)}</div>
-                    <div class="muted" style="margin-top:4px; font-size:13px">
-                        ${escapeHtml(subtitle)}
-                    </div>
-                 </div>`;
-        });
-        html += "</div>";
-        $(targetDiv).html(html).show();
-    }
-
+    // ================================
+    // TÌM KIẾM ĐỊA ĐIỂM
+    // ================================
     function escapeHtml(str) {
         return String(str || "").replace(/[&<>"'`=\/]/g, function (s) {
             return {
@@ -178,6 +139,28 @@ $(document).ready(function () {
                 "=": "&#x3D;",
             }[s];
         });
+    }
+
+    function renderSuggestions(data, targetDiv) {
+        let html = '<div class="list-group">';
+        if (Array.isArray(data) && data.length > 0) {
+            $.each(data, function (i, loc) {
+                let city = loc.city || "";
+                let province = loc.province || "";
+                html += `<div class="list-group-item location-item" data-name="${escapeHtml(
+                    city
+                )}">
+                    <div style="font-weight:600">${escapeHtml(city)}</div>
+                    <div class="muted" style="margin-top:4px; font-size:13px">Tất cả các điểm lên xe ở ${escapeHtml(
+                        city
+                    )}</div>
+                </div>`;
+            });
+        } else {
+            html += '<div class="list-group-item muted">Không có kết quả</div>';
+        }
+        html += "</div>";
+        $(targetDiv).html(html).show();
     }
 
     function fetchSuggestions(query, targetDiv) {
@@ -194,120 +177,96 @@ $(document).ready(function () {
         });
     }
 
-    $("#fromCity").on("focus", function () {
+    $("#fromCity").on("focus input", function () {
+        fetchSuggestions($(this).val().trim(), "#fromSuggestions");
         $("#toSuggestions").hide();
-        fetchSuggestions("", "#fromSuggestions");
+    });
+    $("#toCity").on("focus input", function () {
+        fetchSuggestions($(this).val().trim(), "#toSuggestions");
+        $("#fromSuggestions").hide();
     });
 
-    $("#toCity").on("focus", function () {
-        $("#toSuggestions").hide();
-        fetchSuggestions("", "#toSuggestions");
-    });
-
-    $("#fromCity").on("input", function () {
-        let q = $(this).val().trim();
-        $("#toSuggestions").hide();
-        fetchSuggestions(q, "#fromSuggestions");
-    });
-
-    $("#toCity").on("input", function () {
-        let q = $(this).val().trim();
-        $("#toSuggestions").hide();
-        fetchSuggestions(q, "#toSuggestions");
-    });
-
-    $("#fromCity").on("blur", function () {
+    $("#fromCity, #toCity").on("blur", function () {
+        let target =
+            $(this).attr("id") === "fromCity"
+                ? "#fromSuggestions"
+                : "#toSuggestions";
         setTimeout(() => {
-            if (!$(document.activeElement).closest("#fromSuggestions").length) {
-                $("#fromSuggestions").hide();
-            }
+            if (!$(":focus").closest(target).length) $(target).hide();
         }, 200);
     });
 
-    $("#toCity").on("blur", function () {
-        setTimeout(() => {
-            if (!$(document.activeElement).closest("#toSuggestions").length) {
-                $("#toSuggestions").hide();
-            }
-        }, 200);
-    });
-
-    $(document).on("click", ".location-item", function (e) {
+    $(document).on("click", ".location-item", function () {
         let name = $(this).data("name");
-        let id = $(this).data("id");
         let parent = $(this).closest(".suggestion-box").attr("id");
         if (parent === "fromSuggestions") {
-            $("#fromCity").val(name).data("location-id", id);
+            $("#fromCity").val(name).data("location-id", $(this).data("id"));
             $("#fromSuggestions").hide();
         } else {
-            $("#toCity").val(name).data("location-id", id);
+            $("#toCity").val(name).data("location-id", $(this).data("id"));
             $("#toSuggestions").hide();
         }
     });
 
     $(document).on("click", function (e) {
         if (!$(e.target).closest(".search-input-wrap").length) {
-            $("#fromSuggestions").hide();
-            $("#toSuggestions").hide();
+            $("#fromSuggestions, #toSuggestions").hide();
         }
     });
 
-    $("form#searchForm").attr("autocomplete", "off");
-
     $("#swapBtn").on("click", function () {
-        let f = $("#fromCity").val();
-        let t = $("#toCity").val();
+        let f = $("#fromCity").val(),
+            t = $("#toCity").val();
         $("#fromCity").val(t);
         $("#toCity").val(f);
     });
 
-    document.querySelectorAll(".trip-card").forEach((card) => {
-        const featureBtn = card.querySelector(".footer-btn.featured");
-        const routeBtn = card.querySelector(".route-btn");
-        const extraBox = card.querySelector(".trip-extra");
+    // ================================
+    // TRIP CARD TOGGLE
+    // ================================
+    $(".trip-card").each(function () {
+        var card = $(this);
+        var featureBtn = card.find(".footer-btn.featured");
+        var routeBtn = card.find(".route-btn");
+        var extraBox = card.find(".trip-extra");
+        var featureContent = card.find(".features-content");
+        var routeContent = card.find(".route-content");
 
-        const featureContent = card.querySelector(".features-content");
-        const routeContent = card.querySelector(".route-content");
-
-        featureBtn.addEventListener("click", () => {
-            extraBox.style.display = "block";
-            featureContent.style.display = "block";
-            routeContent.style.display = "none";
-
-            featureBtn.classList.add("active");
-            routeBtn.classList.remove("active");
+        featureBtn.on("click", function () {
+            extraBox.show();
+            featureContent.show();
+            routeContent.hide();
+            featureBtn.addClass("active");
+            routeBtn.removeClass("active");
         });
-
-        routeBtn.addEventListener("click", () => {
-            extraBox.style.display = "block";
-            featureContent.style.display = "none";
-            routeContent.style.display = "block";
-
-            routeBtn.classList.add("active");
-            featureBtn.classList.remove("active");
+        routeBtn.on("click", function () {
+            extraBox.show();
+            featureContent.hide();
+            routeContent.show();
+            routeBtn.addClass("active");
+            featureBtn.removeClass("active");
         });
     });
 
+    // ================================
+    // PICKUP / DROPOFF & SUMMARY
+    // ================================
     function updateSummary() {
-        let pickup = $('input[name="pickup_id"]:checked');
-        let dropoff = $('input[name="dropoff_id"]:checked');
-
-        if (pickup.length) {
-            let name = pickup
+        let pickup =
+            $('input[name="pickup_id"]:checked')
                 .closest(".location-item-updated")
-                .data("location-name");
-            $("#summary-pickup-name").text(name);
-        }
-
-        if (dropoff.length) {
-            let name = dropoff
+                .data("location-name") || "";
+        let dropoff =
+            $('input[name="dropoff_id"]:checked')
                 .closest(".location-item-updated")
-                .data("location-name");
-            $("#summary-dropoff-name").text(name);
-        }
+                .data("location-name") || "";
+        $("#summary-pickup-name").text(pickup);
+        $("#summary-dropoff-name").text(dropoff);
     }
 
-    updateSummary();
+    if ($('input[name="pickup_id"]').length) {
+        updateSummary();
+    }
 
     $(document).on(
         "change",
@@ -318,10 +277,8 @@ $(document).ready(function () {
     $("#btn-choose-seat").on("click", function () {
         let schedule_id = $(this).data("schedule");
         let seatsNeeded = $(this).data("seats");
-
         let pickup = $('input[name="pickup_id"]:checked').val();
         let dropoff = $('input[name="dropoff_id"]:checked').val();
-
         if (!pickup || !dropoff) {
             alert("Vui lòng chọn điểm đón và điểm trả.");
             return;
@@ -331,23 +288,15 @@ $(document).ready(function () {
             url: "/booking/check-pickup",
             type: "GET",
             data: {
-                schedule_id: schedule_id,
+                schedule_id,
                 pickup_id: pickup,
                 dropoff_id: dropoff,
                 seats: seatsNeeded,
             },
             success: function (res) {
-                if (res.status === "ok") {
-                    let url =
-                        `/booking/seat?schedule_id=${schedule_id}` +
-                        `&pickup_id=${pickup}` +
-                        `&dropoff_id=${dropoff}` +
-                        `&seats=${seatsNeeded}`;
-
-                    window.location.href = url;
-                } else {
-                    alert(res.message);
-                }
+                if (res.status === "ok")
+                    window.location.href = `/booking/seat?schedule_id=${schedule_id}&pickup_id=${pickup}&dropoff_id=${dropoff}&seats=${seatsNeeded}`;
+                else alert(res.message);
             },
             error: function () {
                 alert("Có lỗi xảy ra khi kiểm tra dữ liệu.");
@@ -355,95 +304,140 @@ $(document).ready(function () {
         });
     });
 
-    // Bên trong $(document).ready(function() { ... })
+    // ================================
+    // SEAT SELECTION & SUMMARY UPDATE
+    // ================================
+    const selectableSeats = $(".seat-only.available, .bed-item.available");
+    const $summarySeats = $("#summary-selected-seats");
+    const $summaryTotal = $("#summary-total-fare");
+    const $btnContinue = $("#btn-continue-booking");
 
-    const selectableUnits = document.querySelectorAll(
-        ".seat-only.available, .bed-item.available"
-    );
-    const summarySeatsElement = document.getElementById(
-        "summary-selected-seats"
-    );
-    const summaryTotalElement = document.getElementById("summary-total-fare");
-    const btnContinue = document.getElementById("btn-continue");
+    const basePrice = parseFloat($summaryTotal.data("base-price") || 0);
+    const maxSeats = parseInt($summaryTotal.data("max-seats") || 1);
 
-    const basePrice = parseFloat(summaryTotalElement.dataset.basePrice || 0);
-    const maxSeats = parseInt(summaryTotalElement.dataset.maxSeats || 1);
-
-    const formatCurrency = (amount) => {
+    function formatCurrency(amount) {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
         }).format(amount);
-    };
+    }
 
-    const updateSeatSummary = () => {
-        const selectedUnits = Array.from(
-            document.querySelectorAll(".seat-only.selected, .bed-item.selected")
-        ).map((unit) => unit.dataset.seat);
-
-        const count = selectedUnits.length;
+    function updateSeatSummary() {
+        const selectedSeats = $(".seat-only.selected, .bed-item.selected")
+            .map(function () {
+                return $(this).data("seat");
+            })
+            .get();
+        const count = selectedSeats.length;
         const totalFare = count * basePrice;
-
-        btnContinue.disabled = count === 0;
+        $btnContinue.prop("disabled", count === 0);
 
         if (count > 0) {
-            summarySeatsElement.textContent = selectedUnits.join(", ");
-            summarySeatsElement.classList.remove("text-danger");
-            summarySeatsElement.classList.add("text-primary");
-            summaryTotalElement.textContent = formatCurrency(totalFare);
+            $summarySeats
+                .text(selectedSeats.join(","))
+                .removeClass("text-danger")
+                .addClass("text-primary");
+            $summaryTotal.text(formatCurrency(totalFare));
         } else {
-            summarySeatsElement.textContent = "Chưa chọn";
-            summarySeatsElement.classList.remove("text-primary");
-            summarySeatsElement.classList.add("text-danger");
-            summaryTotalElement.textContent = formatCurrency(0);
+            $summarySeats
+                .text("Chưa chọn")
+                .removeClass("text-primary")
+                .addClass("text-danger");
+            $summaryTotal.text(formatCurrency(0));
         }
-    };
+    }
 
-    selectableUnits.forEach((unit) => {
-        unit.addEventListener("click", function () {
-            const currentlySelected = document.querySelectorAll(
-                ".seat-only.selected, .bed-item.selected"
-            );
+    selectableSeats.on("click", function () {
+        const selectedCount = $(
+            ".seat-only.selected, .bed-item.selected"
+        ).length;
+        if (!$(this).hasClass("selected") && selectedCount >= maxSeats) return;
 
-            if (
-                !this.classList.contains("selected") &&
-                currentlySelected.length >= maxSeats
-            ) {
-                return;
-            }
+        $(this).toggleClass("selected");
+        updateSeatSummary();
 
-            this.classList.toggle("selected");
-            updateSeatSummary();
-
-            const selectedSeats = Array.from(
-                document.querySelectorAll(
-                    ".seat-only.selected, .bed-item.selected"
-                )
-            ).map((el) => el.dataset.seat);
-
-            const scheduleIdInput = document.querySelector(
-                'input[name="schedule_id"]'
-            );
-            if (!scheduleIdInput) return;
-
-            fetch("/booking/update-selected-seats", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]'
-                    ).content,
-                },
-                body: JSON.stringify({
-                    schedule_id: scheduleIdInput.value,
-                    selected_seats: selectedSeats,
-                }),
+        // Update server
+        const scheduleId = $('input[name="schedule_id"]').val();
+        if (!scheduleId) return;
+        const selectedSeats = $(".seat-only.selected, .bed-item.selected")
+            .map(function () {
+                return $(this).data("seat");
             })
-                .then((res) => res.json())
-                .then((data) => console.log("Seats updated", data))
-                .catch((err) => console.error(err));
+            .get();
+        $.ajax({
+            url: "/booking/update-selected-seats",
+            type: "POST",
+            data: JSON.stringify({
+                schedule_id: scheduleId,
+                selected_seats: selectedSeats,
+            }),
+            contentType: "application/json",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                console.log("Seats updated", res);
+            },
+            error: function (err) {
+                console.error(err);
+            },
         });
     });
 
     updateSeatSummary();
+
+    $("#btn-continue-booking").on("click", function () {
+        const selectedSeats = $(".seat-only.selected, .bed-item.selected")
+            .map(function () {
+                return $(this).data("seat");
+            })
+            .get();
+
+        if (selectedSeats.length === 0) {
+            alert("Vui lòng chọn ghế trước khi tiếp tục!");
+            return;
+        }
+
+        const scheduleId = $("#schedule_id").val();
+        const pickupId = $("#pickup_id").val();
+        const dropoffId = $("#dropoff_id").val();
+        const totalPrice = $("#summary-total-fare").text().replace(/\D/g, "");
+
+        if (!scheduleId || !pickupId || !dropoffId) {
+            alert("Vui lòng chọn đầy đủ điểm đón và điểm trả!");
+            return;
+        }
+
+        const nextUrl = `/booking/customer-info?schedule_id=${scheduleId}&pickup_id=${pickupId}&dropoff_id=${dropoffId}&seats=${
+            selectedSeats.length
+        }&selected=${selectedSeats.join(",")}&total_price=${totalPrice}`;
+        window.location.href = nextUrl;
+    });
+
+    $("#customer-form").on("submit", function (e) {
+        var name = $("#passenger_name").val();
+        var phone = $("#passenger_phone").val();
+        var email = $("#passenger_email").val();
+
+        if (!name || !phone || !email) {
+            alert("Vui lòng điền đầy đủ thông tin khách hàng");
+            e.preventDefault();
+        }
+    });
+
+    $("#btn-continue-payment").on("click", function () {
+        let isLoggedIn = $("#passenger_name").length === 0;
+
+        if (!isLoggedIn) {
+            let name = $("#passenger_name").val().trim();
+            let phone = $("#passenger_phone").val().trim();
+            let email = $("#passenger_email").val().trim();
+
+            if (!name || !phone || !email) {
+                alert("Vui lòng điền đầy đủ thông tin khách hàng");
+                return;
+            }
+        }
+        $("#customer-form").submit();
+    });
 });

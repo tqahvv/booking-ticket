@@ -34,7 +34,10 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/booking/pickup', [BookingController::class, 'choosePickup'])->name('booking.pickup');
 Route::get('/booking/check-pickup', [BookingController::class, 'checkPickup'])->name('booking.checkPickup');
 Route::get('/booking/seat', [BookingController::class, 'chooseSeat'])->name('booking.seat');
-
-
+Route::post('/booking/update-selected-seats', [BookingController::class, 'updateSelectedSeats']);
+Route::get('/booking/customer-info', [BookingController::class, 'showCustomerInfo'])
+    ->name('booking.customerInfo');
+Route::post('/booking/store-customer-info', [BookingController::class, 'storeCustomerInfo'])
+    ->name('booking.storeCustomerInfo');
 
 require __DIR__ . '/admin.php';
