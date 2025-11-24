@@ -11,6 +11,7 @@ class Schedule extends Model
 
     protected $fillable = [
         'route_id',
+        'schedule_template_id',
         'vehicle_type_id',
         'operator_id',
         'departure_datetime',
@@ -18,6 +19,7 @@ class Schedule extends Model
         'total_seats',
         'seats_available',
         'base_fare',
+        'locked_until',
         'status',
     ];
 

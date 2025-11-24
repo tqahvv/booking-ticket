@@ -39,11 +39,12 @@
                     <span class="step-line"></span>
                 </div>
 
-                <div class="step-item last-step">
+                <div class="step-item">
                     <div class="step-content">
                         <span class="step-circle">5</span>
                         <span class="step-text text-nowrap">Vé điện tử</span>
                     </div>
+                    <span class="step-line"></span>
                 </div>
             </div>
 

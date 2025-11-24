@@ -13,6 +13,7 @@ class BookingPassenger extends Model
         'booking_id',
         'passenger_name',
         'passenger_phone',
+        'passenger_email',
         'identification_type',
         'identification_number',
         'seat_number',

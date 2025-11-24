@@ -35,9 +35,15 @@ Route::get('/booking/pickup', [BookingController::class, 'choosePickup'])->name(
 Route::get('/booking/check-pickup', [BookingController::class, 'checkPickup'])->name('booking.checkPickup');
 Route::get('/booking/seat', [BookingController::class, 'chooseSeat'])->name('booking.seat');
 Route::post('/booking/update-selected-seats', [BookingController::class, 'updateSelectedSeats']);
+Route::post('/booking/cache-seat-selection', [BookingController::class, 'cacheSeatSelection']);
 Route::get('/booking/customer-info', [BookingController::class, 'showCustomerInfo'])
     ->name('booking.customerInfo');
 Route::post('/booking/store-customer-info', [BookingController::class, 'storeCustomerInfo'])
     ->name('booking.storeCustomerInfo');
+Route::get('/booking/payment', [BookingController::class, 'showPayment'])->name('booking.payment');
+Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.payment.process');
+Route::get('/booking/completed', [BookingController::class, 'completed'])->name('booking.completed');
+Route::get('/booking/bank-transfer', [BookingController::class, 'showBankTransfer'])->name('booking.bank-transfer');
+Route::post('/booking/bank-transfer/confirm', [BookingController::class, 'confirmBankTransfer'])->name('booking.bank-transfer.confirm');
 
 require __DIR__ . '/admin.php';

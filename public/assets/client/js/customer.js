@@ -356,7 +356,6 @@ $(document).ready(function () {
         $(this).toggleClass("selected");
         updateSeatSummary();
 
-        // Update server
         const scheduleId = $('input[name="schedule_id"]').val();
         if (!scheduleId) return;
         const selectedSeats = $(".seat-only.selected, .bed-item.selected")
@@ -401,17 +400,42 @@ $(document).ready(function () {
         const scheduleId = $("#schedule_id").val();
         const pickupId = $("#pickup_id").val();
         const dropoffId = $("#dropoff_id").val();
-        const totalPrice = $("#summary-total-fare").text().replace(/\D/g, "");
+
+        let totalPriceText = $("#summary-total-fare").text() || "";
+        const totalPrice = totalPriceText.replace(/[^\d]/g, "") || 0;
 
         if (!scheduleId || !pickupId || !dropoffId) {
             alert("Vui lòng chọn đầy đủ điểm đón và điểm trả!");
             return;
         }
 
-        const nextUrl = `/booking/customer-info?schedule_id=${scheduleId}&pickup_id=${pickupId}&dropoff_id=${dropoffId}&seats=${
-            selectedSeats.length
-        }&selected=${selectedSeats.join(",")}&total_price=${totalPrice}`;
-        window.location.href = nextUrl;
+        $.ajax({
+            url: "/booking/cache-seat-selection",
+            type: "POST",
+            data: {
+                schedule_id: scheduleId,
+                pickup_id: pickupId,
+                dropoff_id: dropoffId,
+                selected_seats: selectedSeats.join(","),
+                seats: selectedSeats.length,
+                total_price: totalPrice,
+                _token: $('meta[name="csrf-token"]').attr("content"),
+            },
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.status === "ok") {
+                    window.location.href = "/booking/customer-info";
+                } else {
+                    alert(res.message || "Có lỗi khi lưu thông tin.");
+                }
+            },
+            error: function (xhr) {
+                console.error("cache-seat-selection error:", xhr);
+                alert("Server lỗi 419 – kiểm tra CSRF token.");
+            },
+        });
     });
 
     $("#customer-form").on("submit", function (e) {
@@ -426,7 +450,7 @@ $(document).ready(function () {
     });
 
     $("#btn-continue-payment").on("click", function () {
-        let isLoggedIn = $("#passenger_name").length === 0;
+        let isLoggedIn = $("body").data("logged-in") == 1;
 
         if (!isLoggedIn) {
             let name = $("#passenger_name").val().trim();

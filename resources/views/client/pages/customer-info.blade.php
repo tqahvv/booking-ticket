@@ -38,11 +38,12 @@
                     <span class="step-line"></span>
                 </div>
 
-                <div class="step-item last-step">
+                <div class="step-item">
                     <div class="step-content">
                         <span class="step-circle">5</span>
                         <span class="step-text text-nowrap">Vé điện tử</span>
                     </div>
+                    <span class="step-line"></span>
                 </div>
             </div>
 
@@ -53,21 +54,36 @@
                     <form id="customer-form" action="{{ route('booking.storeCustomerInfo') }}" method="POST">
                         @csrf
 
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                @foreach ($errors->all() as $error)
+                                    <div>{{ $error }}</div>
+                                @endforeach
+                            </div>
+                        @endif
+
                         @if (auth()->check())
                             <div class="alert alert-info">
                                 Thông tin của bạn sẽ tự động được sử dụng để đặt vé.
                             </div>
 
-                            <p><strong>Họ tên:</strong> {{ auth()->user()->name }}</p>
-                            <p><strong>Email:</strong> {{ auth()->user()->email }}</p>
-                            <p><strong>Điện thoại:</strong> {{ auth()->user()->phone ?? 'Chưa có' }}</p>
+                            <div class="mb-3">
+                                <label class="form-label">Họ và tên</label>
+                                <input type="text" id="passenger_name" name="passenger_name" class="form-control"
+                                    value="{{ old('passenger_name', auth()->user()->name) }}" required>
+                            </div>
 
-                            <input type="hidden" id="passenger_name" name="passenger_name"
-                                value="{{ auth()->user()->name }}">
-                            <input type="hidden" id="passenger_email" name="passenger_email"
-                                value="{{ auth()->user()->email }}">
-                            <input type="hidden" id="passenger_phone" name="passenger_phone"
-                                value="{{ auth()->user()->phone }}">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" id="passenger_email" name="passenger_email" class="form-control"
+                                    value="{{ old('passenger_email', auth()->user()->email) }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Số điện thoại</label>
+                                <input type="text" id="passenger_phone" name="passenger_phone" class="form-control"
+                                    value="{{ old('passenger_phone', auth()->user()->phone) }}" required>
+                            </div>
                         @else
                             <div class="mb-3">
                                 <label class="form-label">Họ và tên</label>

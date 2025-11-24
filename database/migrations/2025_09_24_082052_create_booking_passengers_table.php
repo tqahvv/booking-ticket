@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
             $table->string('passenger_name');
             $table->string('passenger_phone')->nullable();
+            $table->string('passenger_email')->nullable();
             $table->string('identification_type')->nullable();
             $table->string('identification_number')->nullable();
             $table->string('seat_number')->nullable();
