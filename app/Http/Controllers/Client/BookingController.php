@@ -338,7 +338,7 @@ class BookingController extends Controller
     {
         $booking = Booking::with(['passengers', 'schedule'])->findOrFail($request->booking_id);
 
-        $transfer = BankTransfer::firstOrCreate(
+        $transfer = BankTransfer::updateOrCreate(
             ['booking_id' => $booking->id],
             [
                 'bank_name' => 'Ngân hàng A',

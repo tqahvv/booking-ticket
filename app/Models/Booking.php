@@ -41,4 +41,26 @@ class Booking extends Model
     {
         return $this->hasMany(Ticket::class);
     }
+
+    public function getStatusLabelAttribute()
+    {
+        return [
+            'pending' => 'Chờ xử lý',
+            'confirmed' => 'Đã xác nhận',
+            'cancelled' => 'Đã hủy',
+            'expired' => 'Hết hạn',
+            'waiting_transfer' => 'Chờ chuyển khoản',
+        ][$this->status] ?? 'Không rõ';
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return [
+            'pending' => 'secondary',
+            'confirmed' => 'success',
+            'cancelled' => 'danger',
+            'expired' => 'dark',
+            'waiting_transfer' => 'warning',
+        ][$this->status] ?? 'secondary';
+    }
 }

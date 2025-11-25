@@ -46,4 +46,6 @@ Route::get('/booking/completed', [BookingController::class, 'completed'])->name(
 Route::get('/booking/bank-transfer', [BookingController::class, 'showBankTransfer'])->name('booking.bank-transfer');
 Route::post('/booking/bank-transfer/confirm', [BookingController::class, 'confirmBankTransfer'])->name('booking.bank-transfer.confirm');
 
+Route::get('/my-bookings', [HomeController::class, 'booking'])->name('booking.index');
+
 require __DIR__ . '/admin.php';

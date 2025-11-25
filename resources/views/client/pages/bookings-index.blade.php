@@ -1,0 +1,80 @@
+@extends('layouts.client')
+
+@section('title', 'Đặt chỗ của tôi')
+@section('content')
+    <div class="container my-5">
+        <h2 class="mb-4 text-center">Đặt chỗ của tôi</h2>
+        @if (!$user)
+            <div class="card shadow-lg mb-4 p-4">
+                <h4 class="mb-3">Tra cứu đặt chỗ</h4>
+                <form method="GET" action="{{ route('booking.index') }}" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="Nhập email">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="text" name="phone" class="form-control" placeholder="Nhập số điện thoại">
+                    </div>
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary px-4" style="margin-top: 10px">Tra cứu</button>
+                    </div>
+                </form>
+            </div>
+        @endif
+
+
+        @if ($bookings->isEmpty())
+            <div class="alert alert-warning text-center mt-4">
+                Không tìm thấy đặt chỗ nào.
+            </div>
+        @else
+            @foreach ($bookings as $booking)
+                <div class="card shadow-lg mb-4 border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold">Mã đặt chỗ: {{ $booking->code }}</h5>
+                            <span
+                                class="badge bg-{{ $booking->status_color }} text-light">{{ $booking->status_label }}</span>
+                        </div>
+
+
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Ngày đặt:</strong> {{ $booking->booking_date }}</div>
+                            <div class="col-md-4"><strong>Tổng tiền:</strong> {{ number_format($booking->total_price) }} VND
+                            </div>
+                            <div class="col-md-4"><strong>Số khách:</strong> {{ $booking->num_passengers }}</div>
+                        </div>
+
+
+                        <h6 class="fw-bold mt-3">Hành khách</h6>
+                        <table class="table table-bordered table-striped mt-2">
+                            <thead>
+                                <tr>
+                                    <th>Họ tên</th>
+                                    <th>Email</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Ghế</th>
+                                    <th>Điểm đón</th>
+                                    <th>Điểm trả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($booking->passengers as $p)
+                                    <tr>
+                                        <td>{{ $p->passenger_name }}</td>
+                                        <td>{{ $p->passenger_email }}</td>
+                                        <td>{{ $p->passenger_phone }}</td>
+                                        <td>{{ $p->seat_number }}</td>
+                                        <td>{{ $p->pickupStop->location->name }}</td>
+                                        <td>{{ $p->dropoffStop->location->name }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endforeach
+        @endif
+    </div>
+@endsection

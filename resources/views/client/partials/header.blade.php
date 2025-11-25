@@ -13,7 +13,7 @@
                         <li><a href="#">Khuyến mãi</a></li>
                         <li><a href="#">Hỗ trợ</a></li>
                         <li><a href="#">Hợp tác với chúng tôi</a></li>
-                        <li><a href="#">Đặt chỗ của tôi</a></li>
+                        <li><a href="{{ route('booking.index') }}">Đặt chỗ của tôi</a></li>
 
                         @auth
                             <li class="nav-item dropdown ms-2 user-menu">
@@ -24,7 +24,7 @@
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                     <a class="dropdown-item" href="{{ route('account.edit') }}">Trang cá nhân</a>
-                                    <a class="dropdown-item" href="#">Đặt chỗ của tôi</a>
+                                    <a class="dropdown-item" href="{{ route('booking.index') }}">Đặt chỗ của tôi</a>
                                     <div class="dropdown-divider"></div>
                                     <a href="#" id="logout-link" class="dropdown-item">Đăng xuất</a>
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST"

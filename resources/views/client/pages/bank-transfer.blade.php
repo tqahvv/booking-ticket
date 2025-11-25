@@ -34,8 +34,7 @@
     </div>
 
     <script>
-        // Countdown 15 phút
-        let expiresAt = new Date("{{ $transfer->expires_at }}").getTime();
+        let expiresAt = new Date("{{ $transfer->expires_at->format('Y-m-d H:i:s') }}").getTime();
 
         let x = setInterval(function() {
             let now = new Date().getTime();
