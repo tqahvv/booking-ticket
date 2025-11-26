@@ -9,6 +9,7 @@ use App\Models\BookingPassenger;
 use App\Models\PaymentMethod;
 use App\Models\Schedule;
 use App\Models\ScheduleTemplate;
+use App\Models\Ticket;
 use App\Models\VehicleSeatTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -305,6 +306,8 @@ class BookingController extends Controller
                     $booking->paid = false;
                     $booking->save();
 
+                    $this->generateTickets($booking);
+
                     $schedule->decrement('seats_available', $booking->num_passengers);
 
                     Log::info("Booking {$booking->id} confirmed as COD, seats reduced: {$booking->num_passengers}");
@@ -354,23 +357,62 @@ class BookingController extends Controller
 
     public function confirmBankTransfer(Request $request)
     {
-        $booking = Booking::with('passengers')->findOrFail($request->booking_id);
-        $transfer = BankTransfer::where('booking_id', $booking->id)->firstOrFail();
+        DB::beginTransaction();
+        try {
+            $booking = Booking::with('passengers')->findOrFail($request->booking_id);
+            $transfer = BankTransfer::where('booking_id', $booking->id)->firstOrFail();
 
-        $transfer->status = 'confirmed';
-        $transfer->save();
+            $transfer->status = 'confirmed';
+            $transfer->save();
 
-        $booking->status = 'confirmed';
-        $booking->paid = true;
-        $booking->save();
+            $booking->status = 'confirmed';
+            $booking->paid = true;
+            $booking->save();
 
-        return redirect()->route('booking.completed', ['booking_id' => $booking->id])
-            ->with('success', 'Thanh toán chuyển khoản đã được xác nhận.');
+            foreach ($booking->passengers as $passenger) {
+                $passenger->status = 'confirmed';
+                $passenger->save();
+            }
+
+            $this->generateTickets($booking);
+
+            DB::commit();
+
+            return redirect()->route('booking.completed', ['booking_id' => $booking->id])
+                ->with('success', 'Thanh toán chuyển khoản đã được xác nhận và vé đã được phát hành.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Bank transfer confirm error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Xác nhận thất bại. Vui lòng thử lại.']);
+        }
     }
 
     public function completed(Request $request)
     {
-        $booking = Booking::with(['passengers', 'schedule.route.origin', 'schedule.route.destination'])->findOrFail($request->booking_id);
+        $booking = Booking::with([
+            'passengers',
+            'tickets',
+            'schedule.route.origin',
+            'schedule.route.destination'
+        ])->findOrFail($request->booking_id);
+
         return view('client.pages.completed', compact('booking'));
+    }
+
+    private function generateTickets(Booking $booking)
+    {
+        foreach ($booking->passengers as $p) {
+            Ticket::create([
+                'booking_id' => $booking->id,
+                'ticket_code' => 'TKT-' . strtoupper(Str::random(8)),
+                'issued_at' => now(),
+                'valid_from' => $booking->schedule->departure_datetime,
+                'valid_to' => $booking->schedule->arrival_datetime,
+                'seat_number'  => $p->seat_number,
+                'status' => 'unused',
+                'qr_code_data' => 'BOOKING:' . $booking->code . ';SEAT:' . $p->seat_number,
+                'e_ticket_url' => null,
+            ]);
+        }
     }
 }

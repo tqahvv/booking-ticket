@@ -24,7 +24,6 @@
 
             <p>Ghế được giữ <strong id="countdown"></strong> phút. Nếu quá thời gian này, booking sẽ bị hủy tự động.</p>
 
-            {{-- Optional: khách bấm đã chuyển --}}
             <form action="{{ route('booking.bank-transfer.confirm') }}" method="POST">
                 @csrf
                 <input type="hidden" name="booking_id" value="{{ $booking->id }}">

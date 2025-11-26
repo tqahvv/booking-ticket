@@ -17,6 +17,7 @@ class BankTransfer extends Model
         'amount',
         'status',
         'expires_at',
+        'confirmed_at'
     ];
 
     public function bookings()

@@ -15,6 +15,7 @@ class Ticket extends Model
         'issued_at',
         'valid_from',
         'valid_to',
+        'seat_number',
         'status',
         'qr_code_data',
         'e_ticket_url',

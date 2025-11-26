@@ -161,7 +161,7 @@ $(document).ready(function () {
                 }
             },
             error: function () {
-                alert("Có lỗi xảy ra!");
+                toastr.error("Có lỗi xảy ra!");
             },
         });
     });
@@ -180,6 +180,127 @@ $(document).ready(function () {
                 preview.append(img);
             };
             reader.readAsDataURL(file);
+        });
+    });
+
+    $(document).on("change", "#booking-status", function () {
+        let select = $(this);
+        let url = select.data("url");
+        let status = select.val();
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: { status: status },
+            success: function (res) {
+                toastr.success(res.message);
+                window.location.href = "/admin/bookings";
+            },
+            error: function () {
+                toastr.error("Có lỗi xảy ra khi cập nhật trạng thái!");
+            },
+        });
+    });
+
+    $(document).on("click", "#btn-confirm-transfer", function () {
+        let button = $(this);
+        let url = button.data("url");
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            success: function (res) {
+                toastr.success(res.message);
+                window.location.href = "/admin/bookings";
+            },
+            error: function () {
+                toastr.error("Có lỗi xảy ra khi xác nhận chuyển khoản!");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-booking", function () {
+        let id = $(this).data("id");
+        let row = $(this).closest("tr");
+
+        if (confirm("Bạn có chắc chắn muốn xóa?")) {
+            $.ajaxSetup({
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content"
+                    ),
+                },
+            });
+
+            $.ajax({
+                url: `/admin/bookings/${id}`,
+                type: "DELETE",
+                success: function (res) {
+                    toastr.success(res.message);
+                    row.fadeOut(300, function () {
+                        $(this).remove();
+                    });
+                },
+                error: function () {
+                    toastr.error("Có lỗi xảy ra khi xóa booking!");
+                },
+            });
+        }
+    });
+
+    $(document).on("submit", ".update-schedule-form", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let url = form.data("url");
+        let id = form.data("id");
+
+        let formData = new FormData(this);
+
+        $.ajax({
+            url: url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                if (res.success) {
+                    $("#modalUpdate-" + id).modal("hide");
+
+                    let row = $("#schedule-row-" + id);
+                    row.find("td:nth-child(2)").text(
+                        formData.get("departure_datetime").replace("T", " ")
+                    );
+                    row.find("td:nth-child(4)").text(
+                        new Intl.NumberFormat("vi-VN").format(
+                            formData.get("base_fare")
+                        ) + " VNĐ"
+                    );
+
+                    toastr.success(res.message);
+                }
+            },
+            error: function (xhr) {
+                let msg = "Lỗi server";
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    msg = Object.values(xhr.responseJSON.errors)
+                        .flat()
+                        .join("\n");
+                }
+                alert(msg);
+            },
         });
     });
 });

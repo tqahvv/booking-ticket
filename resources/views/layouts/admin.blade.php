@@ -30,7 +30,12 @@
     <link href="{{ asset('assets/admin/vendors/bootstrap-daterangepicker/daterangepicker.css') }}" rel="stylesheet">
 
     @php
-        $dataTableRoutes = ['admin.posts.index', 'admin.products.index', 'admin.orders.index'];
+        $dataTableRoutes = [
+            'admin.posts.index',
+            'admin.bookings.index',
+            'admin.schedules.index',
+            'admin.scheduleTemplates.index',
+        ];
     @endphp
 
     @if (in_array(Route::currentRouteName(), $dataTableRoutes))

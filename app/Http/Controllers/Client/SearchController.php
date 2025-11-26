@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\BookingPassenger;
 use Illuminate\Http\Request;
 use App\Models\Location;
 use App\Models\Route as BusRoute;

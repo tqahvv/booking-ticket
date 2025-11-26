@@ -28,18 +28,26 @@ class HomeController extends Controller
         $email = $request->query('email');
         $phone = $request->query('phone');
 
-
         if ($user) {
-            $bookings = Booking::with(['schedule', 'passengers', 'passengers.pickupStop', 'passengers.dropoffStop'])
+            $bookings = Booking::with([
+                'schedule',
+                'passengers',
+                'passengers.pickupStop',
+                'passengers.dropoffStop',
+                'tickets'
+            ])
                 ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
         } else {
             $bookings = collect();
 
-
             if ($email || $phone) {
-                $bookings = Booking::with(['schedule', 'passengers'])
+                $bookings = Booking::with([
+                    'schedule',
+                    'passengers',
+                    'tickets'
+                ])
                     ->whereHas('passengers', function ($query) use ($email, $phone) {
                         if ($email) $query->where('passenger_email', $email);
                         if ($phone) $query->where('passenger_phone', $phone);
@@ -48,7 +56,6 @@ class HomeController extends Controller
                     ->get();
             }
         }
-
         return view('client.pages.bookings-index', compact('bookings', 'user'));
     }
 }

@@ -44,24 +44,31 @@
                             </ul>
                         </li>
                     @endif
-                    {{-- @if ($adminUser->role->permissions->contains('name', 'manage_products'))
-                        <li><a href="#"><i class="fa fa-table"></i> Quản lý sản phẩm <span
+                    @if ($adminUser->role->permissions->contains('name', 'manage_bookings'))
+                        <li><a href="#"><i class="fa fa-table"></i> Quản lý đặt chỗ <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                <li><a href="{{ route('admin.product.add') }}">Thêm sản phẩm</a></li>
-                                <li><a href="{{ route('admin.products.index') }}">Danh sách sản phẩm</a></li>
+                                <li><a href="{{ route('admin.bookings.index') }}">Danh sách đặt chỗ</a></li>
                             </ul>
                         </li>
-                    @endif --}}
-                    {{-- @if ($adminUser->role->permissions->contains('name', 'manage_orders'))
-                        <li><a href="{{ route('admin.orders.index') }}"><i class="fa fa-bar-chart-o"></i> Quản lý đơn
-                                hàng</a></li>
-                    @endif --}}
-                    {{-- @if ($adminUser->role->permissions->contains('name', 'manage_contacts'))
-                        <li><a href="{{ route('admin.contact.index') }}"><i class="fa fa-clone"></i>Quản lý liên hệ
-                            </a>
+                    @endif
+                    @if ($adminUser->role->permissions->contains('name', 'manage_schedules'))
+                        <li><a href="#"><i class="fa fa-bar-chart-o"></i> Quản lý lịch chuyến <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.schedules.index') }}">Danh sách lịch chuyến</a></li>
+                            </ul>
                         </li>
-                    @endif --}}
+                    @endif
+                    @if ($adminUser->role->permissions->contains('name', 'manage_schedules'))
+                        <li><a href="#"><i class="fa fa-clone"></i> Quản lý lịch chạy <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="">Thêm mới lịch chạy</a></li>
+                                <li><a href="{{ route('admin.scheduleTemplates.index') }}">Danh sách lịch chạy</a></li>
+                            </ul>
+                        </li>
+                    @endif
                 </ul>
             </div>
         </div>

@@ -30,6 +30,15 @@
                 </p>
             </div>
 
+            <h5 class="fw-bold mt-4">Danh sách vé</h5>
+            <ul>
+                @foreach ($booking->tickets as $ticket)
+                    <li>
+                        Mã vé: {{ $ticket->ticket_code }} – Ghế: {{ $ticket->seat_number }}
+                    </li>
+                @endforeach
+            </ul>
+
             <div class="d-flex gap-3">
                 <a href="{{ route('home') }}" class="btn btn-outline-primary">Về trang chủ</a>
                 {{-- <a href="" class="btn btn-primary">In vé

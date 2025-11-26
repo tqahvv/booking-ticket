@@ -37,6 +37,11 @@ class Booking extends Model
         return $this->hasMany(BookingPassenger::class);
     }
 
+    public function bankTransfer()
+    {
+        return $this->hasOne(BankTransfer::class);
+    }
+
     public function tickets()
     {
         return $this->hasMany(Ticket::class);
