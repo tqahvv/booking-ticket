@@ -60,12 +60,53 @@
                             </ul>
                         </li>
                     @endif
+
                     @if ($adminUser->role->permissions->contains('name', 'manage_schedules'))
-                        <li><a href="#"><i class="fa fa-clone"></i> Quản lý lịch chạy <span
+                        <li><a href="#"><i class="fa fa-clone"></i> Quản lý chuyến xe <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                <li><a href="">Thêm mới lịch chạy</a></li>
-                                <li><a href="{{ route('admin.scheduleTemplates.index') }}">Danh sách lịch chạy</a></li>
+                                <li><a href="{{ route('admin.scheduleTemplates.add') }}">Thêm mới chuyến xe</a></li>
+                                <li><a href="{{ route('admin.scheduleTemplates.index') }}">Danh sách chuyến xe</a></li>
+                            </ul>
+                        </li>
+                    @endif
+
+                    @if ($adminUser->role->permissions->contains('name', 'manage_routes'))
+                        <li><a href="#"><i class="fa fa-road"></i> Quản lý tuyến đường <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.routes.add') }}">Thêm mới tuyến đường</a></li>
+                                <li><a href="{{ route('admin.routes.index') }}">Danh sách tuyến đường</a></li>
+                            </ul>
+                        </li>
+                    @endif
+
+                    @if ($adminUser->role->permissions->contains('name', 'manage_operators'))
+                        <li><a href="#"><i class="fa fa-building"></i> Quản lý nhà xe <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.operators.add') }}">Thêm mới nhà xe</a></li>
+                                <li><a href="{{ route('admin.operators.index') }}">Danh sách nhà xe</a></li>
+                            </ul>
+                        </li>
+                    @endif
+
+                    @if ($adminUser->role->permissions->contains('name', 'manage_locations'))
+                        <li><a href="#"><i class="fa fa-map-marker"></i> Quản lý điểm đón - trả <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.locations.add') }}">Thêm mới đón - trả</a></li>
+                                <li><a href="{{ route('admin.locations.index') }}">Danh sách đón - trả</a></li>
+                            </ul>
+                        </li>
+                    @endif
+
+                    @if ($adminUser->role->permissions->contains('name', 'manage_vehicles'))
+                        <li><a href="#"><i class="fa fa-bus"></i> Quản lý xe <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.vehicleTypes.add') }}">Thêm mới loại</a></li>
+                                <li><a href="{{ route('admin.vehicleTypes.index') }}">Danh sách loại xe</a></li>
                             </ul>
                         </li>
                     @endif

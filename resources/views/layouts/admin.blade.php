@@ -35,6 +35,10 @@
             'admin.bookings.index',
             'admin.schedules.index',
             'admin.scheduleTemplates.index',
+            'admin.routes.index',
+            'admin.operators.index',
+            'admin.locations.index',
+            'admin.vehicleTypes.index',
         ];
     @endphp
 

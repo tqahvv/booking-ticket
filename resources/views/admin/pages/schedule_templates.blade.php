@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Quản lý lịch chạy')
+@section('title', 'Quản lý chuyến xe')
 
 @section('content')
     <div class="right_col" role="main">
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h3>Danh sách lịch chạy</h3>
+                    <h3>Danh sách chuyến xe</h3>
                 </div>
             </div>
             <div class="clearfix"></div>
@@ -30,7 +30,7 @@
                                 <div class="col-sm-12">
                                     <div class="card-box table-responsive">
                                         <p class="text-muted font-13 m-b-30">
-                                            Trang quản lý bài viết cho phép admin tạo, chỉnh sửa và xóa lịch chạy.
+                                            Trang quản lý bài viết cho phép admin tạo, chỉnh sửa và xóa chuyến xe.
                                         </p>
                                         <table id="datatable-buttons" class="table table-striped table-bordered"
                                             style="width: 100%;">
@@ -56,7 +56,7 @@
                                                         <td>{{ $t->vehicleType->name }}</td>
                                                         <td>{{ $t->departure_time }}</td>
                                                         <td>{{ $t->travel_duration_minutes }}</td>
-                                                        <td>{{ implode(',', json_decode($t->running_days, true)) }}</td>
+                                                        <td>{{ implode(',', $t->running_days ?? []) }}</td>
                                                         <td>{{ number_format($t->base_fare, 0, ',', '.') }} VNĐ</td>
                                                         <td>{{ $t->default_seats }}</td>
 
@@ -71,8 +71,9 @@
                                                         <td
                                                             style="display: flex; justify-content: center; align-content: center">
                                                             <a class="btn btn-app btn-delete-schedule-template"
-                                                                data-id="{{ $t->id }}">
-                                                                <i class="fa fa-trash"></i>Xóa
+                                                                data-id="{{ $t->id }}"
+                                                                data-delete-url="{{ route('admin.scheduleTemplates.delete', $t->id) }}">
+                                                                <i class="fa fa-trash"></i> Xóa
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -115,14 +116,29 @@
                                                                             </div>
                                                                             <div class="form-group">
                                                                                 <label>Ngày chạy</label>
+
+                                                                                @php
+                                                                                    $runningDays = is_array(
+                                                                                        $t->running_days,
+                                                                                    )
+                                                                                        ? $t->running_days
+                                                                                        : json_decode(
+                                                                                            $t->running_days ?? '[]',
+                                                                                            true,
+                                                                                        );
+                                                                                @endphp
+
                                                                                 @foreach ([1, 2, 3, 4, 5, 6, 7] as $day)
-                                                                                    <label><input type="checkbox"
+                                                                                    <label style="margin-right: 6px;">
+                                                                                        <input type="checkbox"
                                                                                             name="running_days[]"
                                                                                             value="{{ $day }}"
-                                                                                            {{ in_array($day, json_decode($t->running_days, true)) ? 'checked' : '' }}>
-                                                                                        {{ $day }}</label>
+                                                                                            {{ in_array($day, $runningDays) ? 'checked' : '' }}>
+                                                                                        {{ $day }}
+                                                                                    </label>
                                                                                 @endforeach
                                                                             </div>
+
                                                                             <div class="form-group">
                                                                                 <label>Giá vé</label>
                                                                                 <input type="number" name="base_fare"
@@ -137,17 +153,20 @@
                                                                                     required>
                                                                             </div>
                                                                             <div class="form-group">
-                                                                                <label>Start Date</label>
+                                                                                <label>Ngày bắt đầu</label>
                                                                                 <input type="date" name="start_date"
                                                                                     class="form-control"
-                                                                                    value="{{ $t->start_date }}" required>
+                                                                                    value="{{ \Carbon\Carbon::parse($t->start_date)->format('Y-m-d') }}"
+                                                                                    required>
                                                                             </div>
+
                                                                             <div class="form-group">
-                                                                                <label>End Date</label>
+                                                                                <label>Ngày kết thúc</label>
                                                                                 <input type="date" name="end_date"
                                                                                     class="form-control"
-                                                                                    value="{{ $t->end_date }}">
+                                                                                    value="{{ $t->end_date ? \Carbon\Carbon::parse($t->end_date)->format('Y-m-d') : '' }}">
                                                                             </div>
+
                                                                         </div>
                                                                         <div class="modal-footer">
                                                                             <button type="button" class="btn btn-secondary"
@@ -166,3 +185,9 @@
                                 </div>
                             </div>
                         @endsection
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

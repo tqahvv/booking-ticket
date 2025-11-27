@@ -303,4 +303,492 @@ $(document).ready(function () {
             },
         });
     });
+
+    $("[id^=update-schedule-template-]").on("submit", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let id = form.attr("id").replace("update-schedule-template-", "");
+        let url = "/admin/schedule-templates/" + id;
+
+        let formData = form.serialize();
+        console.log(formData);
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (!res.success) {
+                    alert("Có lỗi xảy ra!");
+                    return;
+                }
+
+                let row = $("#template-row-" + id);
+
+                row.find("td:eq(3)").text(res.data.departure_time);
+                row.find("td:eq(4)").text(res.data.travel_duration_minutes);
+                row.find("td:eq(5)").text(res.data.running_days.join(","));
+                row.find("td:eq(6)").text(
+                    Number(res.data.base_fare).toLocaleString("vi-VN", {
+                        minimumFractionDigits: 0,
+                    }) + " VNĐ"
+                );
+                row.find("td:eq(7)").text(res.data.default_seats);
+
+                $("#modalUpdate-" + id).modal("hide");
+
+                toastr.success("Cập nhật thành công!");
+            },
+            error: function (xhr) {
+                console.log(xhr.responseText);
+                alert("Lỗi server khi update.");
+            },
+        });
+    });
+
+    $("#add-schedule-template").submit(function (e) {
+        e.preventDefault();
+
+        let form = $("#add-schedule-template");
+        let storeUrl = form.data("store-url");
+        let formData = form.serialize();
+
+        $.ajax({
+            url: storeUrl,
+            type: "POST",
+            data: formData,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                toastr.success(response.message);
+                form.trigger("reset");
+                $("#form-result").html("");
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let html = '<div class="alert alert-danger"><ul>';
+                $.each(errors, function (key, value) {
+                    html += "<li>" + value[0] + "</li>";
+                });
+                html += "</ul></div>";
+                $("#form-result").html(html);
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-schedule-template", function (e) {
+        e.preventDefault();
+
+        if (!confirm("Bạn có chắc chắn muốn xóa chuyến xe này?")) return;
+
+        let button = $(this);
+        let deleteUrl = button.data("delete-url");
+        let rowId = "#template-row-" + button.data("id");
+
+        $.ajax({
+            url: deleteUrl,
+            type: "DELETE",
+            data: {
+                _token: $("meta[name='csrf-token']").attr("content"),
+            },
+            success: function (response) {
+                $(rowId).remove();
+                toastr.success(response.message);
+            },
+            error: function (xhr) {
+                alert("Có lỗi xảy ra, vui lòng thử lại.");
+            },
+        });
+    });
+
+    $(document).on("submit", "[id^=update-route-]", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let id = form.attr("id").replace("update-route-", "");
+        let url = "/admin/routes/update/" + id;
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: form.serialize(),
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (!res.success) {
+                    alert("Có lỗi xảy ra!");
+                    return;
+                }
+
+                let row = $("#route-row-" + id);
+                row.find("td:eq(1)").text(res.data.origin_name);
+                row.find("td:eq(2)").text(res.data.destination_name);
+                row.find("td:eq(3)").text(res.data.operator_name);
+                row.find("td:eq(4)").text(res.data.distance);
+                row.find("td:eq(5)").text(res.data.description);
+
+                $("#modalUpdate-" + id).modal("hide");
+                toastr.success("Cập nhật thành công!");
+            },
+            error: function (xhr) {
+                alert("Lỗi server khi update.");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-route", function (e) {
+        e.preventDefault();
+
+        let btn = $(this);
+        let id = btn.data("id");
+
+        if (!confirm("Bạn có chắc chắn muốn xóa tuyến đường này?")) return;
+
+        $.ajax({
+            url: "/admin/routes/delete/" + id,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    $("#route-row-" + id).remove();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.message || "Có lỗi xảy ra khi xóa!");
+                }
+            },
+            error: function (xhr) {
+                toastr.error("Lỗi server khi xóa tuyến đường.");
+            },
+        });
+    });
+
+    $("#add-route-form").submit(function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let storeUrl = form.data("store-url");
+        let formData = form.serialize();
+
+        $.ajax({
+            url: storeUrl,
+            type: "POST",
+            data: formData,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                toastr.success(response.message);
+                form.trigger("reset");
+                $("#form-result").html("");
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let html = '<div class="alert alert-danger"><ul>';
+                $.each(errors, function (key, value) {
+                    html += "<li>" + value[0] + "</li>";
+                });
+                html += "</ul></div>";
+                $("#form-result").html(html);
+            },
+        });
+    });
+
+    $(document).on("submit", "[id^=update-operator-]", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let id = form.attr("id").replace("update-operator-", "");
+        let url = "/admin/operators/update/" + id;
+
+        let formData = new FormData(form[0]);
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (!res.success) {
+                    alert("Có lỗi xảy ra!");
+                    return;
+                }
+
+                let row = $("#operator-row-" + id);
+                row.find("td:eq(0)").text(res.data.name);
+                row.find("td:eq(1)").text(res.data.description);
+                row.find("td:eq(2)").text(res.data.rating);
+                row.find("td:eq(3)").text(res.data.contact_info);
+
+                $("#updateOperator-" + id).modal("hide");
+                toastr.success("Cập nhật thành công!");
+            },
+            error: function () {
+                alert("Lỗi server khi update.");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-operator", function (e) {
+        e.preventDefault();
+
+        if (!confirm("Bạn có chắc chắn muốn xóa nhà xe này?")) return;
+
+        let id = $(this).data("id");
+        let url = $(this).data("url");
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    $("#operator-row-" + id).remove();
+                    toastr.success(res.message);
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi server khi xóa nhà xe.");
+            },
+        });
+    });
+
+    $("#add-operator-form").submit(function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let url = form.data("store-url");
+        let formData = new FormData(this);
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                toastr.success(response.message);
+                form.trigger("reset");
+                $("#form-result").html("");
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let html = '<div class="alert alert-danger"><ul>';
+                $.each(errors, function (k, v) {
+                    html += "<li>" + v[0] + "</li>";
+                });
+                html += "</ul></div>";
+                $("#form-result").html(html);
+            },
+        });
+    });
+
+    $(document).on("submit", "[id^=update-location-]", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let id = form.attr("id").replace("update-location-", "");
+        let url = "/admin/locations/update/" + id;
+
+        let formData = new FormData(form[0]);
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (!res.success) {
+                    alert("Có lỗi xảy ra!");
+                    return;
+                }
+
+                let row = $("#location-row-" + id);
+                row.find("td:eq(0)").text(res.data.name);
+                row.find("td:eq(1)").text(res.data.city);
+                row.find("td:eq(2)").text(res.data.address);
+                row.find("td:eq(3)").text(res.data.province);
+
+                if (res.data.image_url) {
+                    row.find("td:eq(4)").html(
+                        `<img src="${res.data.image_url}" width="60">`
+                    );
+                }
+
+                $("#modalUpdate-" + id).modal("hide");
+                toastr.success("Cập nhật thành công!");
+            },
+            error: function () {
+                alert("Lỗi server khi update.");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-location", function (e) {
+        e.preventDefault();
+
+        let btn = $(this);
+        let id = btn.data("id");
+
+        if (!confirm("Bạn có chắc chắn muốn xóa điểm này?")) return;
+
+        $.ajax({
+            url: "/admin/locations/delete/" + id,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    $("#location-row-" + id).remove();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.message || "Có lỗi xảy ra khi xóa!");
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi server khi xóa điểm.");
+            },
+        });
+    });
+
+    $("#add-location-form").submit(function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let storeUrl = form.data("store-url");
+        let formData = new FormData(form[0]);
+
+        $.ajax({
+            url: storeUrl,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                toastr.success(response.message);
+                form.trigger("reset");
+                $("#form-result").html("");
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let html = '<div class="alert alert-danger"><ul>';
+
+                $.each(errors, function (key, value) {
+                    html += "<li>" + value[0] + "</li>";
+                });
+
+                html += "</ul></div>";
+                $("#form-result").html(html);
+            },
+        });
+    });
+
+    $(document).on("submit", "[id^=update-vehicleType-]", function (e) {
+        e.preventDefault();
+        let form = $(this);
+        let id = form.attr("id").replace("update-vehicleType-", "");
+        let url = "/admin/vehicle-types/update/" + id;
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: form.serialize(),
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (!res.success) {
+                    alert("Có lỗi xảy ra!");
+                    return;
+                }
+                let row = $("#vehicleType-row-" + id);
+                row.find("td:eq(0)").text(res.data.name);
+                row.find("td:eq(1)").text(res.data.capacity_total);
+                row.find("td:eq(2)").text(res.data.number_of_floors);
+                row.find("td:eq(3)").text(res.data.description);
+                $("#modalUpdate-" + id).modal("hide");
+                toastr.success("Cập nhật thành công!");
+            },
+            error: function (xhr) {
+                alert("Lỗi server khi update.");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-vehicleType", function (e) {
+        e.preventDefault();
+        let btn = $(this);
+        let id = btn.data("id");
+        if (!confirm("Bạn có chắc chắn muốn xóa loại xe này?")) return;
+
+        $.ajax({
+            url: "/admin/vehicle-types/delete/" + id,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    $("#vehicleType-row-" + id).remove();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.message || "Có lỗi xảy ra khi xóa!");
+                }
+            },
+            error: function (xhr) {
+                toastr.error("Lỗi server khi xóa loại xe.");
+            },
+        });
+    });
+
+    $("#add-vehicleType-form").submit(function (e) {
+        e.preventDefault();
+        let form = $(this);
+        let storeUrl = form.data("store-url");
+        $.ajax({
+            url: storeUrl,
+            type: "POST",
+            data: form.serialize(),
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                toastr.success(res.message);
+                form.trigger("reset");
+                $("#form-result").html("");
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let html = '<div class="alert alert-danger"><ul>';
+                $.each(errors, function (key, value) {
+                    html += "<li>" + value[0] + "</li>";
+                });
+                html += "</ul></div>";
+                $("#form-result").html(html);
+            },
+        });
+    });
 });

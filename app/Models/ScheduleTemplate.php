@@ -13,9 +13,10 @@ class ScheduleTemplate extends Model
         'departure_time',
         'travel_duration_minutes',
         'running_days',
-        'start_date',
-        'end_date',
         'base_fare',
+        'default_seats',
+        'start_date',
+        'end_date'
     ];
 
     protected $casts = [
@@ -24,7 +25,6 @@ class ScheduleTemplate extends Model
         'end_date'     => 'date',
     ];
 
-    // Relations
     public function route()
     {
         return $this->belongsTo(Route::class);

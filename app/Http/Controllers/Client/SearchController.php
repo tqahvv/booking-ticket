@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
-use App\Models\BookingPassenger;
 use Illuminate\Http\Request;
 use App\Models\Location;
 use App\Models\Route as BusRoute;
-use App\Models\Schedule;
 use App\Models\ScheduleTemplate;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 
 class SearchController extends Controller
 {
@@ -82,7 +79,7 @@ class SearchController extends Controller
             ->whereHas('route.destination', function ($q) use ($destination) {
                 $q->where('city', $destination->city);
             })
-            ->whereRaw("JSON_CONTAINS(running_days, '[$weekday]')")
+            ->whereRaw("JSON_CONTAINS(running_days, '\"$weekday\"')")
             ->where('default_seats', '>=', $seats)
             ->get();
 

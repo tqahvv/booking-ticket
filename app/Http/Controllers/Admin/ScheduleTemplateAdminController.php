@@ -23,35 +23,51 @@ class ScheduleTemplateAdminController extends Controller
         return view('admin.pages.schedule_templates', compact('templates', 'routes', 'operators', 'vehicleTypes'));
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'route_id' => 'required|exists:routes,id',
-            'operator_id' => 'required|exists:operators,id',
-            'vehicle_type_id' => 'required|exists:vehicle_types,id',
-            'departure_time' => 'required',
-            'travel_duration_minutes' => 'required|integer|min:0',
-            'running_days' => 'required|array',
-            'base_fare' => 'required|numeric|min:0',
-            'default_seats' => 'required|integer|min:1',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        $data['running_days'] = json_encode($data['running_days']);
-
-        ScheduleTemplate::create($data);
-
-        return response()->json(['success' => true, 'message' => 'Thêm template thành công']);
-    }
-
     public function update(Request $request, $id)
     {
         $template = ScheduleTemplate::findOrFail($id);
 
-        $data = $request->validate([
+        $runningDays = $request->running_days ?? [];
+
+        $template->update([
+            'departure_time' => $request->departure_time,
+            'travel_duration_minutes' => $request->travel_duration_minutes,
+            'running_days' => $runningDays,
+            'base_fare' => $request->base_fare,
+            'default_seats' => $request->default_seats,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'departure_time' => $template->departure_time,
+                'travel_duration_minutes' => $template->travel_duration_minutes,
+                'running_days' => $runningDays,
+                'base_fare' => $template->base_fare,
+                'default_seats' => $template->default_seats,
+            ]
+        ]);
+    }
+
+    public function showFormAdd()
+    {
+        $routes = Route::with(['origin', 'destination'])->get();
+        $operators = Operator::all();
+        $vehicleTypes = VehicleType::all();
+
+        return view('admin.pages.schedule_template-add', compact('routes', 'operators', 'vehicleTypes'));
+    }
+
+    public function add(Request $request)
+    {
+        $request->validate([
+            'route_id' => 'required|exists:routes,id',
+            'operator_id' => 'required|exists:operators,id',
+            'vehicle_type_id' => 'required|exists:vehicle_types,id',
             'departure_time' => 'required',
-            'travel_duration_minutes' => 'required|integer|min:0',
+            'travel_duration_minutes' => 'required|integer|min:1',
             'running_days' => 'required|array',
             'base_fare' => 'required|numeric|min:0',
             'default_seats' => 'required|integer|min:1',
@@ -59,11 +75,20 @@ class ScheduleTemplateAdminController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $data['running_days'] = json_encode($data['running_days']);
+        $template = ScheduleTemplate::create([
+            'route_id' => $request->route_id,
+            'operator_id' => $request->operator_id,
+            'vehicle_type_id' => $request->vehicle_type_id,
+            'departure_time' => $request->departure_time,
+            'travel_duration_minutes' => $request->travel_duration_minutes,
+            'running_days' => $request->running_days,
+            'base_fare' => $request->base_fare,
+            'default_seats' => $request->default_seats,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+        ]);
 
-        $template->update($data);
-
-        return response()->json(['success' => true, 'message' => 'Cập nhật template thành công']);
+        return response()->json(['message' => 'Thêm chuyến xe thành công!']);
     }
 
     public function delete($id)
@@ -72,35 +97,5 @@ class ScheduleTemplateAdminController extends Controller
         $template->delete();
 
         return response()->json(['success' => true, 'message' => 'Xóa template thành công']);
-    }
-
-    public function generateSchedules($id)
-    {
-        $template = ScheduleTemplate::findOrFail($id);
-        $runningDays = json_decode($template->running_days, true);
-
-        $start = Carbon::parse($template->start_date);
-        $end = $template->end_date ? Carbon::parse($template->end_date) : $start->copy()->addDays(30);
-
-        $generatedCount = 0;
-        for ($date = $start; $date->lte($end); $date->addDay()) {
-            if (in_array($date->dayOfWeekIso, $runningDays)) {
-                Schedule::create([
-                    'schedule_template_id' => $template->id,
-                    'route_id' => $template->route_id,
-                    'operator_id' => $template->operator_id,
-                    'vehicle_type_id' => $template->vehicle_type_id,
-                    'departure_datetime' => $date->format('Y-m-d') . ' ' . $template->departure_time,
-                    'travel_duration_minutes' => $template->travel_duration_minutes,
-                    'base_fare' => $template->base_fare,
-                    'total_seats' => $template->default_seats,
-                    'seats_available' => $template->default_seats,
-                    'status' => 'scheduled',
-                ]);
-                $generatedCount++;
-            }
-        }
-
-        return response()->json(['success' => true, 'message' => "Đã tạo $generatedCount lịch chạy từ template"]);
     }
 }

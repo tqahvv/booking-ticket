@@ -3,10 +3,14 @@
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BookingAdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LocationAdminController;
+use App\Http\Controllers\Admin\OperatorAdminController;
 use App\Http\Controllers\Admin\PostController;
+use App\Http\Controllers\Admin\RouteAdminController;
 use App\Http\Controllers\Admin\ScheduleAdminController;
 use App\Http\Controllers\Admin\ScheduleTemplateAdminController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VehicleTypeAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -55,9 +59,41 @@ Route::prefix('admin')->group(function () {
         Route::post('/schedules/{id}/update', [ScheduleAdminController::class, 'update'])->name('admin.schedules.update');
 
         Route::get('/schedule-templates', [ScheduleTemplateAdminController::class, 'index'])->name('admin.scheduleTemplates.index');
-        Route::post('/schedule-templates', [ScheduleTemplateAdminController::class, 'store'])->name('admin.scheduleTemplates.store');
+        Route::get('/schedule-templates/add', [ScheduleTemplateAdminController::class, 'showFormAdd'])->name('admin.scheduleTemplates.add');
+        Route::post('/schedule-templates/add', [ScheduleTemplateAdminController::class, 'add'])->name('admin.scheduleTemplates.store');
         Route::post('/schedule-templates/{id}', [ScheduleTemplateAdminController::class, 'update'])->name('admin.scheduleTemplates.update');
         Route::delete('/schedule-templates/{id}', [ScheduleTemplateAdminController::class, 'delete'])->name('admin.scheduleTemplates.delete');
-        Route::post('/schedule-templates/{id}/generate', [ScheduleTemplateAdminController::class, 'generateSchedules'])->name('admin.scheduleTemplates.generate');
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_routes'])->group(function () {
+        Route::get('/routes', [RouteAdminController::class, 'index'])->name('admin.routes.index');
+        Route::get('/routes/add', [RouteAdminController::class, 'showFormAdd'])->name('admin.routes.add');
+        Route::post('/routes/add', [RouteAdminController::class, 'add'])->name('admin.routes.store');
+        Route::post('/routes/update/{id}', [RouteAdminController::class, 'update'])->name('admin.routes.update');
+        Route::post('/routes/delete/{id}', [RouteAdminController::class, 'delete'])->name('admin.routes.delete');
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_operators'])->group(function () {
+        Route::get('/operators', [OperatorAdminController::class, 'index'])->name('admin.operators.index');
+        Route::get('/operators/add', [OperatorAdminController::class, 'showFormAdd'])->name('admin.operators.add');
+        Route::post('/operators/add', [OperatorAdminController::class, 'add'])->name('admin.operators.store');
+        Route::post('/operators/update/{id}', [OperatorAdminController::class, 'update'])->name('admin.operators.update');
+        Route::post('/operators/delete/{id}', [OperatorAdminController::class, 'delete'])->name('admin.operators.delete');
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_locations'])->group(function () {
+        Route::get('/locations', [LocationAdminController::class, 'index'])->name('admin.locations.index');
+        Route::get('/locations/add', [LocationAdminController::class, 'showFormAdd'])->name('admin.locations.add');
+        Route::post('/locations/add', [LocationAdminController::class, 'add'])->name('admin.locations.store');
+        Route::post('/locations/update/{id}', [LocationAdminController::class, 'update'])->name('admin.locations.update');
+        Route::post('/locations/delete/{id}', [LocationAdminController::class, 'delete'])->name('admin.locations.delete');
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_vehicles'])->group(function () {
+        Route::get('/vehicle-types', [VehicleTypeAdminController::class, 'index'])->name('admin.vehicleTypes.index');
+        Route::get('/vehicle-types/add', [VehicleTypeAdminController::class, 'showFormAdd'])->name('admin.vehicleTypes.add');
+        Route::post('/vehicle-types/add', [VehicleTypeAdminController::class, 'add'])->name('admin.vehicleTypes.store');
+        Route::post('/vehicle-types/update/{id}', [VehicleTypeAdminController::class, 'update'])->name('admin.vehicleTypes.update');
+        Route::post('/vehicle-types/delete/{id}', [VehicleTypeAdminController::class, 'delete'])->name('admin.vehicleTypes.delete');
     });
 });
