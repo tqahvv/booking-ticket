@@ -5,6 +5,7 @@ use App\Http\Controllers\Client\AuthController;
 use App\Http\Controllers\Client\BookingController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\LocationController;
+use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\Client\PostController;
 use App\Http\Controllers\Client\SearchController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,9 @@ Route::post('/booking/payment', [BookingController::class, 'processPayment'])->n
 Route::get('/booking/completed', [BookingController::class, 'completed'])->name('booking.completed');
 Route::get('/booking/bank-transfer', [BookingController::class, 'showBankTransfer'])->name('booking.bank-transfer');
 Route::post('/booking/bank-transfer/confirm', [BookingController::class, 'confirmBankTransfer'])->name('booking.bank-transfer.confirm');
+
+Route::get('/booking/vnpay-return', [BookingController::class, 'vnpayReturn'])->name('booking.vnpay-return');
+
 
 Route::get('/my-bookings', [HomeController::class, 'booking'])->name('booking.index');
 

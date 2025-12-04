@@ -23,9 +23,9 @@
                         VNĐ</span></p>
                 <p><strong>Trạng thái thanh toán:</strong>
                     @if ($booking->paid)
-                        <span class="badge bg-success">Đã thanh toán</span>
+                        <span class="badge bg-success text-light">Đã thanh toán</span>
                     @else
-                        <span class="badge bg-warning">Chưa thanh toán (COD/Chuyển khoản)</span>
+                        <span class="badge bg-warning text-light">Chưa thanh toán (COD/Chuyển khoản)</span>
                     @endif
                 </p>
             </div>

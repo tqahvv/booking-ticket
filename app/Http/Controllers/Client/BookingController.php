@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Services\TicketService;
 
 class BookingController extends Controller
 {
@@ -306,7 +307,7 @@ class BookingController extends Controller
                     $booking->paid = false;
                     $booking->save();
 
-                    $this->generateTickets($booking);
+                    $this->tickets->generateTickets($booking);
 
                     $schedule->decrement('seats_available', $booking->num_passengers);
 
@@ -329,8 +330,8 @@ class BookingController extends Controller
 
                 return redirect()->route('booking.bank-transfer', ['booking_id' => $booking->id]);
 
-            case 'online':
-                // return $this->startOnlinePayment($booking, $method);
+            case 'vnpay':
+                return $this->startVnpayPayment($booking);
 
             default:
                 abort(400, 'Phương thức thanh toán không hợp lệ.');
@@ -374,7 +375,7 @@ class BookingController extends Controller
                 $passenger->save();
             }
 
-            $this->generateTickets($booking);
+            $this->tickets->generateTickets($booking);
 
             DB::commit();
 
@@ -385,6 +386,109 @@ class BookingController extends Controller
             Log::error('Bank transfer confirm error: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Xác nhận thất bại. Vui lòng thử lại.']);
         }
+    }
+
+    public function startVnpayPayment($booking)
+    {
+        $vnp_Url = config('vnpay.vnp_Url');
+        $vnp_ReturnUrl = config('vnpay.vnp_ReturnUrl');
+        $vnp_TmnCode = config('vnpay.vnp_TmnCode');
+        $vnp_HashSecret = config('vnpay.vnp_HashSecret');
+
+        $inputData = [
+            "vnp_Version" => "2.1.0",
+            "vnp_TmnCode" => $vnp_TmnCode,
+            "vnp_Amount" => $booking->total_price * 100,
+            "vnp_Command" => "pay",
+            "vnp_CreateDate" => date('YmdHis'),
+            "vnp_CurrCode" => "VND",
+            "vnp_IpAddr" => request()->ip(),
+            "vnp_Locale" => "vn",
+            "vnp_OrderInfo" => "Thanh toan ve xe #" . $booking->code,
+            "vnp_OrderType" => "billpayment",
+            "vnp_ReturnUrl" => $vnp_ReturnUrl,
+            "vnp_TxnRef" => $booking->code,
+        ];
+
+        ksort($inputData);
+
+        // Build query
+        $query = "";
+        $hashdata = "";
+        foreach ($inputData as $key => $value) {
+            if ($hashdata != "") {
+                $hashdata .= '&';
+            }
+            $hashdata .= urlencode($key) . "=" . urlencode($value);
+
+            $query .= urlencode($key) . "=" . urlencode($value) . '&';
+        }
+
+        $vnp_Url .= "?" . $query;
+
+        if (isset($vnp_HashSecret)) {
+            $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
+            $vnp_Url .= "vnp_SecureHash=" . $vnpSecureHash;
+        }
+
+        // Cập nhật trạng thái booking
+        $booking->payment_method_id = PaymentMethod::where('type', 'vnpay')->first()->id;
+        $booking->status = 'waiting_payment';
+        $booking->save();
+
+        return redirect($vnp_Url);
+    }
+
+    public function vnpayReturn(Request $request)
+    {
+        $vnp_HashSecret = config('vnpay.vnp_HashSecret');
+        $inputData = $request->all();
+
+        $vnp_SecureHash = $inputData['vnp_SecureHash'] ?? null;
+
+        unset($inputData['vnp_SecureHash']);
+        unset($inputData['vnp_SecureHashType']);
+
+        ksort($inputData);
+
+        $hashData = "";
+        foreach ($inputData as $key => $value) {
+            if ($hashData != "") {
+                $hashData .= '&';
+            }
+            $hashData .= urlencode($key) . "=" . urlencode($value);
+        }
+
+        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+
+        // ❌ Sai chữ ký => redirect về trang thanh toán
+        if ($secureHash !== $vnp_SecureHash) {
+            return redirect()->route('booking.payment')
+                ->withErrors(['error' => 'Sai chữ ký! Dữ liệu có thể bị thay đổi.']);
+        }
+
+        // ✔️ Giao dịch thành công
+        if ($request->vnp_ResponseCode == "00" && $request->vnp_TransactionStatus == "00") {
+
+            $booking = Booking::with('passengers')->where('code', $request->vnp_TxnRef)->firstOrFail();
+
+            // Cập nhật trạng thái booking
+            $booking->status = 'confirmed';
+            $booking->paid = true;
+            $booking->save();
+
+            // Sinh vé
+            $this->tickets->generateTickets($booking);
+
+            // Chuyển sang trang hoàn tất
+            return redirect()->route('booking.completed', [
+                'booking_id' => $booking->id
+            ])->with('success', 'Thanh toán VNPAY thành công!');
+        }
+
+        // ❌ Thanh toán thất bại
+        return redirect()->route('booking.payment')
+            ->withErrors(['error' => 'Thanh toán không thành công. Mã lỗi: ' . $request->vnp_ResponseCode]);
     }
 
     public function completed(Request $request)
@@ -399,20 +503,5 @@ class BookingController extends Controller
         return view('client.pages.completed', compact('booking'));
     }
 
-    private function generateTickets(Booking $booking)
-    {
-        foreach ($booking->passengers as $p) {
-            Ticket::create([
-                'booking_id' => $booking->id,
-                'ticket_code' => 'TKT-' . strtoupper(Str::random(8)),
-                'issued_at' => now(),
-                'valid_from' => $booking->schedule->departure_datetime,
-                'valid_to' => $booking->schedule->arrival_datetime,
-                'seat_number'  => $p->seat_number,
-                'status' => 'unused',
-                'qr_code_data' => 'BOOKING:' . $booking->code . ';SEAT:' . $p->seat_number,
-                'e_ticket_url' => null,
-            ]);
-        }
-    }
+    public function __construct(private TicketService $tickets) {}
 }
