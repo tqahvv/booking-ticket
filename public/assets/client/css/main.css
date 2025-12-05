@@ -6564,3 +6564,21 @@ body.mobile-nav-active #mobile-nav-toggle {
     font-size: 0.7rem;
     padding: 0.25em 0.4em;
 }
+
+.valid-voucher-item {
+    cursor: pointer;
+    border-left: 4px solid #28a745;
+}
+
+.valid-voucher-item:hover {
+    background: #f1fff4;
+}
+
+.invalid-voucher-item {
+    background: #f8f9fa;
+    opacity: 0.6;
+}
+
+.invalid-voucher-item:hover {
+    opacity: 0.6;
+}

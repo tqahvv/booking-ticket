@@ -464,4 +464,77 @@ $(document).ready(function () {
         }
         $("#customer-form").submit();
     });
+
+    $.ajaxSetup({
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+    });
+
+    $("#applyPromo").on("click", function () {
+        const promoCode = $("input[name='promo_select']:checked").val();
+        let totalPrice = parseFloat($("#total_price").val());
+        let finalPrice = parseFloat($("#final_price").val());
+        let discountAmount = parseFloat($("#discount_amount").val());
+
+        if (promoCode === "") {
+            $("#promoMessage").text("Vui lòng nhập mã giảm giá.");
+            return;
+        }
+
+        $.ajax({
+            url: "/apply-promo",
+            type: "POST",
+            data: {
+                promo_code: promoCode,
+                total_price: totalPrice,
+                discount_amount: discountAmount,
+                final_price: finalPrice,
+            },
+            success: function (res) {
+                $("#voucherName").text(promoCode);
+                $("#voucherDesc").text(
+                    "Giảm " + res.discount.toLocaleString() + " VNĐ"
+                );
+                $("#voucherCard").removeClass("d-none");
+
+                $("#discount_amount").val(res.discount);
+                $("#final_price").val(res.final);
+
+                $("#finalPriceLabel").text(res.final.toLocaleString() + " VNĐ");
+
+                $("#discountLabel").text(
+                    "-" + res.discount.toLocaleString() + " VNĐ"
+                );
+                $("#discountRow").removeClass("d-none");
+
+                $("#promoMessage").text("");
+            },
+            error: function (xhr) {
+                let msg =
+                    xhr.responseJSON?.error || "Mã giảm giá không hợp lệ!";
+                $("#promoMessage").text(msg);
+
+                $("#discount_amount").val(0);
+                $("#final_price").val(totalPrice);
+            },
+        });
+    });
+
+    $("#removeVoucher").on("click", function () {
+        let totalPrice = parseFloat($("#total_price").val());
+
+        $("#voucherCard").addClass("d-none");
+        $("#promo_code").val("");
+
+        $("#discountRow").addClass("d-none");
+        $("#discountLabel").text("");
+
+        $("#discount_amount").val(0);
+        $("#final_price").val(totalPrice);
+
+        $("#finalPriceLabel").text(totalPrice.toLocaleString() + " VNĐ");
+
+        $("#promoMessage").text("");
+    });
 });

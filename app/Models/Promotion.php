@@ -19,6 +19,7 @@ class Promotion extends Model
         'usage_limit_per_user',
         'total_usage_limit',
         'min_booking_amount',
+        'is_active',
     ];
 
     public function bookings()

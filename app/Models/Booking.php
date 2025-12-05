@@ -17,6 +17,8 @@ class Booking extends Model
         'promotion_id',
         'booking_date',
         'total_price',
+        'discount_amount',
+        'final_price',
         'num_passengers',
         'status',
         'currency',

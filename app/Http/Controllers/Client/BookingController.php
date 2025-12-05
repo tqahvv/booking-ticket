@@ -7,6 +7,7 @@ use App\Models\BankTransfer;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\PaymentMethod;
+use App\Models\Promotion;
 use App\Models\Schedule;
 use App\Models\ScheduleTemplate;
 use App\Models\Ticket;
@@ -171,6 +172,8 @@ class BookingController extends Controller
             'selected_seats'       => $seats,
             'num_seats'            => $request->seats,
             'total_price'          => $request->total_price,
+            'discount_amount'      => 0,
+            'final_price'          => $request->total_price,
         ]);
 
         return response()->json(['status' => 'ok']);
@@ -186,6 +189,7 @@ class BookingController extends Controller
         $pickupId = session('selected_pickup_id');
         $dropoffId = session('selected_dropoff_id');
         $totalPrice = session('total_price', 0);
+        $promotionId = session('promotion_id');
 
         if (!$scheduleId || !$pickupId || !$dropoffId || empty($selectedSeats)) {
             return redirect()->route('home')->with('error', 'Thiếu dữ liệu đặt vé.');
@@ -198,15 +202,35 @@ class BookingController extends Controller
             'operator'
         ])->findOrFail($scheduleId);
 
+        $discountAmount = session('discount_amount', 0);
+        $finalPrice = session('final_price', $totalPrice);
+        $validPromotions = Promotion::where('is_active', 1)
+            ->where('valid_from', '<=', now())
+            ->where('valid_to', '>=', now())
+            ->get();
+
+        $invalidPromotions = Promotion::where(function ($q) {
+            $q->where('is_active', 0)
+                ->orWhere('valid_from', '>', now())
+                ->orWhere('valid_to', '<', now());
+        })
+            ->get();
+
+        $promotions = $validPromotions->merge($invalidPromotions);
+
+
         return view('client.pages.customer-info', compact(
             'schedule',
             'selectedSeats',
             'pickupId',
             'dropoffId',
-            'totalPrice'
+            'totalPrice',
+            'discountAmount',
+            'finalPrice',
+            'promotionId',
+            'promotions'
         ));
     }
-
 
     public function storeCustomerInfo(Request $request)
     {
@@ -218,6 +242,10 @@ class BookingController extends Controller
             'pickup_id' => 'required|integer',
             'dropoff_id' => 'required|integer',
             'selected_seats' => 'required|string',
+            'total_price' => 'required|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'final_price' => 'required|numeric|min:0',
+            'promotion_id' => 'nullable|integer|exists:promotions,id',
         ]);
 
         $userId = Auth::id() ?? null;
@@ -226,7 +254,11 @@ class BookingController extends Controller
         $numSeats = count($selectedSeats);
 
         $schedule = Schedule::findOrFail($request->schedule_id);
-        $totalPrice = $request->total_price;
+
+        $originalPrice   = (float)$request->total_price;
+        $discountAmount  = (float)($request->discount_amount ?? 0);
+        $finalPrice      = (float)$request->final_price;
+        $promotionId     = $request->promotion_id ?? null;
 
         DB::beginTransaction();
         try {
@@ -236,8 +268,11 @@ class BookingController extends Controller
                 'schedule_id' => $request->schedule_id,
                 'payment_method_id' => null,
                 'booking_date' => Carbon::now(),
-                'total_price' => $totalPrice,
+                'total_price' => $originalPrice,
+                'discount_amount' => $discountAmount,
+                'final_price' => $finalPrice,
                 'num_passengers' => $numSeats,
+                'promotion_id' => $promotionId,
                 'status' => 'pending',
                 'currency' => 'VND',
             ]);
@@ -260,6 +295,38 @@ class BookingController extends Controller
             DB::rollBack();
             return back()->withErrors(['error' => $e->getMessage()]);
         }
+    }
+
+    public function applyPromo(Request $request)
+    {
+        $promo = Promotion::where('code', $request->promo_code)
+            ->where('is_active', 1)
+            ->where('valid_from', '<=', now())
+            ->where('valid_to', '>=', now())
+            ->first();
+
+        if (!$promo) {
+            return response()->json(['error' => 'Mã giảm giá không hợp lệ'], 200);
+        }
+
+        $total = $request->total_price;
+
+        $discount = $promo->discount_type === 'percentage'
+            ? $total * ($promo->discount_value / 100)
+            : $promo->discount_value;
+
+        $discount = min($discount, $total);
+
+        session([
+            'discount_amount' => $discount,
+            'final_price' => $total - $discount,
+            'promotion_id' => $promo->id
+        ]);
+
+        return response()->json([
+            'discount' => $discount,
+            'final' => $total - $discount
+        ]);
     }
 
     public function showPayment(Request $request)
@@ -348,7 +415,7 @@ class BookingController extends Controller
                 'bank_name' => 'Ngân hàng A',
                 'account_number' => '1234567890',
                 'account_name' => 'Công ty XYZ',
-                'amount' => $booking->total_price,
+                'amount' => $booking->final_price,
                 'expires_at' => Carbon::now()->addMinutes(15),
             ]
         );
@@ -398,7 +465,7 @@ class BookingController extends Controller
         $inputData = [
             "vnp_Version" => "2.1.0",
             "vnp_TmnCode" => $vnp_TmnCode,
-            "vnp_Amount" => $booking->total_price * 100,
+            "vnp_Amount" => $booking->final_price * 100,
             "vnp_Command" => "pay",
             "vnp_CreateDate" => date('YmdHis'),
             "vnp_CurrCode" => "VND",
@@ -461,32 +528,26 @@ class BookingController extends Controller
 
         $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
 
-        // ❌ Sai chữ ký => redirect về trang thanh toán
         if ($secureHash !== $vnp_SecureHash) {
             return redirect()->route('booking.payment')
                 ->withErrors(['error' => 'Sai chữ ký! Dữ liệu có thể bị thay đổi.']);
         }
 
-        // ✔️ Giao dịch thành công
         if ($request->vnp_ResponseCode == "00" && $request->vnp_TransactionStatus == "00") {
 
             $booking = Booking::with('passengers')->where('code', $request->vnp_TxnRef)->firstOrFail();
 
-            // Cập nhật trạng thái booking
             $booking->status = 'confirmed';
             $booking->paid = true;
             $booking->save();
 
-            // Sinh vé
             $this->tickets->generateTickets($booking);
 
-            // Chuyển sang trang hoàn tất
             return redirect()->route('booking.completed', [
                 'booking_id' => $booking->id
             ])->with('success', 'Thanh toán VNPAY thành công!');
         }
 
-        // ❌ Thanh toán thất bại
         return redirect()->route('booking.payment')
             ->withErrors(['error' => 'Thanh toán không thành công. Mã lỗi: ' . $request->vnp_ResponseCode]);
     }

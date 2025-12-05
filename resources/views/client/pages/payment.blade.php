@@ -142,7 +142,7 @@
                             </div>
                             <div class="summary-item">
                                 <span>Tổng tiền:</span>
-                                <span class="fw-bold">{{ number_format($booking->total_price) }} VNĐ</span>
+                                <span class="fw-bold">{{ number_format($booking->final_price, 0, '.', ',') }} VNĐ</span>
                             </div>
 
                         </div>

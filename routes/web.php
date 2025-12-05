@@ -46,6 +46,7 @@ Route::post('/booking/payment', [BookingController::class, 'processPayment'])->n
 Route::get('/booking/completed', [BookingController::class, 'completed'])->name('booking.completed');
 Route::get('/booking/bank-transfer', [BookingController::class, 'showBankTransfer'])->name('booking.bank-transfer');
 Route::post('/booking/bank-transfer/confirm', [BookingController::class, 'confirmBankTransfer'])->name('booking.bank-transfer.confirm');
+Route::post('/apply-promo', [BookingController::class, 'applyPromo'])->name('promo.apply');
 
 Route::get('/booking/vnpay-return', [BookingController::class, 'vnpayReturn'])->name('booking.vnpay-return');
 
