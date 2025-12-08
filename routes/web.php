@@ -26,6 +26,7 @@ Route::get('/post', [PostController::class, 'index'])->name('post.index');
 
 Route::get('/locations/search', [LocationController::class, 'search'])->name('locations.search');
 Route::get('/search', [SearchController::class, 'search'])->name('search.results');
+Route::post('/ajax/filter', [SearchController::class, 'filterAjax'])->name('ajax.filter');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/account', [AccountController::class, 'edit'])->name('account.edit');

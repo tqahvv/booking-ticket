@@ -6582,3 +6582,39 @@ body.mobile-nav-active #mobile-nav-toggle {
 .invalid-voucher-item:hover {
     opacity: 0.6;
 }
+
+.filter-list .filter-item { margin-bottom: 12px; }
+.filter-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 8px 0; color: #333; text-decoration: none; }
+.child_menu { padding-left: 12px; margin-top: 6px; }
+
+.filter-options { list-style: none; padding: 0; margin: 0; }
+.filter-options .filter-option {
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    background: transparent;          
+    transition: background-color .12s, color .12s;
+    color: #333;
+    border: 1px solid transparent;
+}
+
+.filter-options .filter-option:hover {
+    background: rgba(0,0,0,0.04);
+}
+.filter-options .filter-option.active {
+    background: #0d6efd; 
+    color: #fff;
+    border-color: rgba(13,110,253,0.2);
+}
+
+.filter-item .child_menu .filter-options { display: block; }
+
+.filter-item.open > .filter-toggle .fa-chevron-down { transform: rotate(180deg); transition: transform .18s; }
+
+.reset-filter-btn { display:inline-block; margin-bottom:8px; padding:6px 10px; background:#f5f5f5; border-radius:4px; border:1px solid #e0e0e0; cursor:pointer; }
+
+.filter-item .child_menu li {
+  border-bottom: none;
+  margin-bottom: 0px;
+}

@@ -88,9 +88,6 @@ class BookingController extends Controller
             ]);
         }
 
-        // TODO: Kiểm tra ghế đặt trùng (sau)
-        // TODO: Kiểm tra còn đủ ghế (sau)
-
         return response()->json([
             'status' => 'ok'
         ]);

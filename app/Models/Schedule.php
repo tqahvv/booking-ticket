@@ -47,4 +47,9 @@ class Schedule extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    protected $casts = [
+        'departure_datetime' => 'datetime',
+        'arrival_datetime' => 'datetime',
+    ];
 }

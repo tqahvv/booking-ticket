@@ -249,6 +249,191 @@ $(document).ready(function () {
     });
 
     // ================================
+    const ajaxUrl = $("#pageData").data("ajax-url");
+    const baseDate = $("#pageData").data("date");
+    const baseSeats = $("#pageData").data("seats");
+
+    let filters = {
+        pickup: "",
+        dropoff: "",
+        time: "",
+        operator: "",
+    };
+
+    const resultsDiv = $("#tripResults");
+
+    $(document).on("click", ".filter-toggle", function (e) {
+        e.preventDefault();
+
+        let $li = $(this).closest(".filter-item");
+        let $child = $li.children(".child_menu").first();
+
+        $li.siblings(".filter-item")
+            .removeClass("open")
+            .children(".child_menu")
+            .slideUp(160);
+
+        $li.toggleClass("open");
+        $child.stop(true, true).slideToggle(160);
+    });
+
+    $(document).on("click", ".filter-options .filter-option", function (e) {
+        e.preventDefault();
+
+        let $this = $(this);
+        let $list = $this.closest(".filter-options");
+
+        // Toggle active
+        if ($this.hasClass("active")) {
+            $list.find(".filter-option").removeClass("active");
+        } else {
+            $list.find(".filter-option").removeClass("active");
+            $this.addClass("active");
+        }
+
+        let selectedValue = $this.data("id") || "";
+        let listId = $list.attr("id");
+
+        // Gán vào filters
+        switch (listId) {
+            case "pickupOptions":
+                filters.pickup = selectedValue;
+                break;
+            case "dropoffOptions":
+                filters.dropoff = selectedValue;
+                break;
+            case "timeOptions":
+                filters.time = selectedValue;
+                break;
+            case "operatorOptions":
+                filters.operator = selectedValue;
+                break;
+        }
+
+        applyFilter();
+    });
+
+    $(document).on("click", ".reset-filter-btn", function (e) {
+        e.preventDefault();
+
+        $(".filter-options .filter-option").removeClass("active");
+
+        filters = { pickup: "", dropoff: "", time: "", operator: "" };
+
+        applyFilter();
+    });
+
+    function applyFilter() {
+        const from = $("#fromVal").val();
+        const to = $("#toVal").val();
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+
+        $.ajax({
+            url: ajaxUrl,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                from,
+                to,
+                date: baseDate,
+                seats: baseSeats,
+                ...filters,
+            }),
+            success: function (res) {
+                resultsDiv.html("");
+
+                if (!res.data || res.data.length === 0) {
+                    resultsDiv.html(
+                        `<p class="text-danger">Không có chuyến xe phù hợp</p>`
+                    );
+                    return;
+                }
+
+                res.data.forEach((sc) => {
+                    resultsDiv.append(buildCard(sc));
+                });
+            },
+        });
+    }
+
+    function buildCard(sc) {
+        return `
+        <div class="trip-card">
+            <div class="trip-header">
+                <div class="company-details">
+                    <span class="company-name">${
+                        sc.operator.name ?? "Không rõ"
+                    }</span>
+                    <span class="bus-type">${sc.vehicle_type.name ?? ""}</span>
+                </div>
+            </div>
+
+            <div class="trip-details">
+                <div class="time-route">
+                    <div class="departure">
+                        <span class="time">${sc.departure_time.substring(
+                            0,
+                            5
+                        )}</span>
+                        <span class="station">${sc.route.origin.name}</span>
+                    </div>
+
+                    <div class="duration-icons">
+                        <i class="fa fa-arrow-right"></i>
+                    </div>
+
+                    <div class="arrival">
+                        <span class="time">${sc.arrival_time.substring(
+                            0,
+                            5
+                        )}</span>
+                        <span class="station">${
+                            sc.route.destination.name
+                        }</span>
+                    </div>
+                </div>
+
+                <div class="vertical-separator"></div>
+
+                <div class="trip-duration-block">
+                    <span class="trip-duration">${sc.duration}</span>
+                </div>
+
+                <div class="vertical-separator"></div>
+
+                <div class="amenity-list">
+                    <i class="fa fa-snowflake"></i>
+                    <i class="fa fa-wifi"></i>
+                    <i class="fa fa-bolt"></i>
+                </div>
+
+                <div class="price-action">
+                    <div class="price-info">
+                        <span class="price">${Number(
+                            sc.base_fare
+                        ).toLocaleString("vi-VN")} VND</span>
+                        <span class="per-person">/khách</span>
+                    </div>
+
+                    <span class="available-seats">Còn ${
+                        sc.seats_available
+                    } vé trống</span>
+
+                    <a href="/booking/pickup?schedule_id=${
+                        sc.id
+                    }&date=${baseDate}&seats=${baseSeats}"
+                       class="book-btn">Đặt Ngay</a>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ================================
     // PICKUP / DROPOFF & SUMMARY
     // ================================
     function updateSummary() {
@@ -465,12 +650,6 @@ $(document).ready(function () {
         $("#customer-form").submit();
     });
 
-    $.ajaxSetup({
-        headers: {
-            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-        },
-    });
-
     $("#applyPromo").on("click", function () {
         const promoCode = $("input[name='promo_select']:checked").val();
         let totalPrice = parseFloat($("#total_price").val());
@@ -481,6 +660,12 @@ $(document).ready(function () {
             $("#promoMessage").text("Vui lòng nhập mã giảm giá.");
             return;
         }
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
 
         $.ajax({
             url: "/apply-promo",
