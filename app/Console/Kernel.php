@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('bank:expire-transfers')->everyMinute();
+        $schedule->command('booking:cancel-expired')->everyMinute();
     }
 
     protected function commands()

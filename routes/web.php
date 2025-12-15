@@ -3,6 +3,8 @@
 use App\Http\Controllers\Client\AccountController;
 use App\Http\Controllers\Client\AuthController;
 use App\Http\Controllers\Client\BookingController;
+use App\Http\Controllers\Client\ChatbotController;
+use App\Http\Controllers\Client\ContactController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\LocationController;
 use App\Http\Controllers\Client\PaymentController;
@@ -38,10 +40,8 @@ Route::get('/booking/check-pickup', [BookingController::class, 'checkPickup'])->
 Route::get('/booking/seat', [BookingController::class, 'chooseSeat'])->name('booking.seat');
 Route::post('/booking/update-selected-seats', [BookingController::class, 'updateSelectedSeats']);
 Route::post('/booking/cache-seat-selection', [BookingController::class, 'cacheSeatSelection']);
-Route::get('/booking/customer-info', [BookingController::class, 'showCustomerInfo'])
-    ->name('booking.customerInfo');
-Route::post('/booking/store-customer-info', [BookingController::class, 'storeCustomerInfo'])
-    ->name('booking.storeCustomerInfo');
+Route::get('/booking/customer-info', [BookingController::class, 'showCustomerInfo'])->name('booking.customerInfo');
+Route::post('/booking/store-customer-info', [BookingController::class, 'storeCustomerInfo'])->name('booking.storeCustomerInfo');
 Route::get('/booking/payment', [BookingController::class, 'showPayment'])->name('booking.payment');
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.payment.process');
 Route::get('/booking/completed', [BookingController::class, 'completed'])->name('booking.completed');
@@ -51,7 +51,13 @@ Route::post('/apply-promo', [BookingController::class, 'applyPromo'])->name('pro
 
 Route::get('/booking/vnpay-return', [BookingController::class, 'vnpayReturn'])->name('booking.vnpay-return');
 
-
 Route::get('/my-bookings', [HomeController::class, 'booking'])->name('booking.index');
+Route::post('/booking/{booking}/cancel', [HomeController::class, 'cancel'])->name('booking.cancel');
+
+Route::get('/chatbot/messages', [ChatbotController::class, 'fetchMessages']);
+Route::post('/chatbot/send', [ChatbotController::class, 'sendMessages']);
+
+Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact', [ContactController::class, 'sendContact'])->name('contact');
 
 require __DIR__ . '/admin.php';

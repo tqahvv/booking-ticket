@@ -1,4 +1,5 @@
 $(document).ready(function () {
+    //manage_users//
     $(".role-btn").on("click", function () {
         const role = $(this).data("role");
         const baseUrl = window.routes.adminUsers;
@@ -51,6 +52,7 @@ $(document).ready(function () {
         });
     });
 
+    //manage_posts//
     $(".post-image").on("change", function () {
         let id = $(this).data("id");
         let preview = $("#image-preview-" + id);
@@ -183,6 +185,81 @@ $(document).ready(function () {
         });
     });
 
+    //manage_category
+    $(document).on("submit", ".update-category-form", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let id = form.data("id");
+        let url = form.data("url");
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: form.serialize(),
+            success: function (res) {
+                if (res.success) {
+                    let row = $("#category-row-" + id);
+                    row.find("td:eq(0)").text(res.data.name);
+                    row.find("td:eq(1)").text(res.data.slug);
+                    row.find("td:eq(2)").text(res.data.description);
+
+                    $("#modalUpdate-" + id).modal("hide");
+                    toastr.success(res.message);
+                }
+            },
+            error: function () {
+                toastr.error("Có lỗi xảy ra!");
+            },
+        });
+    });
+
+    $("#add-category-form").submit(function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let url = form.data("url");
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: form.serialize(),
+            success: function (res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    form.trigger("reset");
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi thêm danh mục");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-category", function () {
+        if (!confirm("Bạn có chắc muốn xóa?")) return;
+
+        let btn = $(this);
+        let url = btn.data("url");
+        let id = btn.data("id");
+
+        $.ajax({
+            url: url,
+            type: "DELETE",
+            data: {
+                _token: $("meta[name='csrf-token']").attr("content"),
+            },
+            success: function (res) {
+                $("#category-row-" + id).remove();
+                toastr.success(res.message);
+            },
+            error: function () {
+                toastr.error("Không thể xóa!");
+            },
+        });
+    });
+
+    //manage_booking
     $(document).on("change", "#booking-status", function () {
         let select = $(this);
         let url = select.data("url");
@@ -260,6 +337,92 @@ $(document).ready(function () {
         }
     });
 
+    //booking_tickets
+    $(document).on("change", ".ticket-status", function () {
+        let id = $(this).data("id");
+        let status = $(this).val();
+
+        $.ajax({
+            url: "/admin/tickets/" + id + "/update-status",
+            type: "POST",
+            data: {
+                _token: $('meta[name="csrf-token"]').attr("content"),
+                status: status,
+            },
+            success: function (res) {
+                toastr.success(res.message);
+            },
+            error: function () {
+                toastr.error("Không thể cập nhật trạng thái vé");
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-view-ticket", function () {
+        let id = $(this).data("id");
+
+        $.get("/admin/tickets/" + id, function (res) {
+            if (!res.success) {
+                toastr.error(res.message);
+                return;
+            }
+
+            let t = res.data;
+
+            let passenger = null;
+            if (t.booking && t.booking.passengers) {
+                passenger = t.booking.passengers.find(
+                    (p) => p.seat_number === t.seat_number
+                );
+            }
+
+            let paymentMethod =
+                t.booking?.payment_method?.name ?? "Chưa thanh toán";
+
+            const ticketStatusText = {
+                unused: "Chưa sử dụng",
+                used: "Đã sử dụng",
+                expired: "Hết hạn",
+                cancelled: "Đã hủy",
+            };
+
+            $("#d-ticket-code").text(t.ticket_code);
+            $("#d-seat").text(t.seat_number ?? "-");
+            $("#d-time").text(t.valid_from + " → " + t.valid_to);
+            $("#d-status").text(ticketStatusText[t.status] ?? t.status);
+            $("#d-payment-method").text(paymentMethod);
+
+            $("#d-passenger-name").text(passenger?.passenger_name ?? "-");
+            $("#d-passenger-phone").text(passenger?.passenger_phone ?? "-");
+            $("#d-passenger-email").text(passenger?.passenger_email ?? "-");
+
+            $("#ticketDetailModal").modal("show");
+        });
+    });
+
+    $(document).on("click", ".btn-delete-ticket", function () {
+        if (!confirm("Bạn có chắc chắn muốn xóa vé này?")) return;
+
+        let id = $(this).data("id");
+        let url = $(this).data("url");
+
+        $.ajax({
+            url: url,
+            type: "DELETE",
+            data: {
+                _token: $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                $("#ticket-row-" + id).remove();
+                toastr.success(res.message);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? "Xóa vé thất bại");
+            },
+        });
+    });
+
+    //manage_schedule
     $(document).on("submit", ".update-schedule-form", function (e) {
         e.preventDefault();
 
@@ -405,6 +568,7 @@ $(document).ready(function () {
         });
     });
 
+    //manage_routes
     $(document).on("submit", "[id^=update-route-]", function (e) {
         e.preventDefault();
 
@@ -500,6 +664,7 @@ $(document).ready(function () {
         });
     });
 
+    //manage_operator
     $(document).on("submit", "[id^=update-operator-]", function (e) {
         e.preventDefault();
 
@@ -598,6 +763,7 @@ $(document).ready(function () {
         });
     });
 
+    //manage_location
     $(document).on("submit", "[id^=update-location-]", function (e) {
         e.preventDefault();
 
@@ -706,6 +872,7 @@ $(document).ready(function () {
         });
     });
 
+    //manage_vehicle
     $(document).on("submit", "[id^=update-vehicleType-]", function (e) {
         e.preventDefault();
         let form = $(this);
@@ -788,6 +955,95 @@ $(document).ready(function () {
                 });
                 html += "</ul></div>";
                 $("#form-result").html(html);
+            },
+        });
+    });
+
+    //contact//
+    if ($("#editor-contact").length) {
+        CKEDITOR.replace("editor-contact");
+    }
+
+    $(document).on("click", ".contact-item", function (e) {
+        let contactName = $(this).data("name");
+        let contactEmail = $(this).data("email");
+        let contactMessage = $(this).data("message");
+        let contactId = $(this).data("id");
+        let isReplied = $(this).attr("data-is_replied");
+
+        $(".mail_view .inbox-body .sender-info strong").text(contactName);
+        $(".mail_view .inbox-body .sender-info span").text(
+            "(" + contactEmail + ")"
+        );
+        $(".mail_view .view-mail p").text(contactMessage);
+
+        $(".mail_view").show();
+
+        if (isReplied != 0) {
+            $("#compose").hide();
+        } else {
+            $(".send-reply-contact").attr("data-email", contactEmail);
+            $(".send-reply-contact").attr("data-id", contactId);
+            $("#compose").show();
+        }
+    });
+
+    $(document).on("click", ".send-reply-contact", function (e) {
+        e.preventDefault();
+        let button = $(this);
+        let email = button.data("email");
+        let contactId = button.data("id");
+        let message = CKEDITOR.instances["editor-contact"].getData();
+
+        if (message.trim() === "") {
+            toastr.error("Nội dung phản hồi không được để trống.");
+            return;
+        }
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+
+        button.prop("disabled", true).text("Đang gửi...");
+
+        $.ajax({
+            url: "contact/reply",
+            type: "POST",
+            data: {
+                email: email,
+                message: message,
+                contact_id: contactId,
+            },
+            success: function (response) {
+                if (response.status) {
+                    toastr.success(response.message);
+                    $(".mail_view").hide();
+                    $("#compose").hide();
+                    CKEDITOR.instances["editor-contact"].setData("");
+                    $("#editor-contact").empty();
+
+                    let contactItem = $(
+                        '.contact-item[data-id="' + contactId + '"]'
+                    );
+                    contactItem.attr("data-is_replied", 1);
+                    contactItem.find("i.fa-circle").css("color", "green");
+
+                    $(".compose").slideToggle();
+                    button
+                        .removeAttr("data-email")
+                        .removeAttr("data-contactId");
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.error);
+            },
+            complete: function () {
+                button.prop("disabled", false);
+                button.text("Gửi");
             },
         });
     });

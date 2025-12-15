@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
 
 </head>
 
@@ -34,8 +36,33 @@
 
     @include('client.partials.footer')
 
+    <div id="chat-widget">
+
+        <div id="chat-toggle">
+            <i class="bi bi-chat-dots-fill"></i>
+        </div>
+
+        <div id="chat-box" class="hidden">
+            <div id="chat-header">
+                <span>Hỗ trợ đặt vé</span>
+                <button id="chat-close">&times;</button>
+            </div>
+
+            <div id="chat-messages"></div>
+
+            <div id="chat-input">
+                <input type="text" id="message-input" placeholder="Nhập câu hỏi..." />
+                <button id="send-btn">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- jQuery luôn đứng đầu -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
     <!-- Các plugin phụ thuộc jQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
@@ -59,6 +86,7 @@
     <script src="{{ asset('assets/client/js/main.js') }}"></script>
     <script src="{{ asset('assets/client/js/customer.js') }}"></script>
 
+    @stack('scripts')
 </body>
 
 </html>

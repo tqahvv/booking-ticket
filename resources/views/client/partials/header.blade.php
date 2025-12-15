@@ -63,7 +63,7 @@
                     <li><a href="">Giới thiệu</a></li>
                     <li><a href="{{ route('post.index') }}">Bài viết</a></li>
                     <li><a href="">Chuyến đi</a></li>
-                    <li><a href="">Liên hệ</a></li>
+                    <li><a href="{{ route('contact.index') }}">Liên hệ</a></li>
                 </ul>
             </nav>
         </div>

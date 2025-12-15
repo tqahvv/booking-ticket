@@ -8,6 +8,7 @@ use App\Models\Image;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -57,5 +58,50 @@ class HomeController extends Controller
             }
         }
         return view('client.pages.bookings-index', compact('bookings', 'user'));
+    }
+
+    public function cancel(Request $request, Booking $booking)
+    {
+        if (Auth::check()) {
+            if ($booking->user_id !== Auth::id()) {
+                abort(403);
+            }
+        } else {
+            $email = $request->input('email');
+            $phone = $request->input('phone');
+
+            $exists = $booking->passengers()
+                ->where('passenger_email', $email)
+                ->where('passenger_phone', $phone)
+                ->exists();
+
+            if (!$exists) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền hủy vé này'
+                ], 403);
+            }
+        }
+
+        if (!$booking->canCancel()) {
+            return response()->json([
+                'message' => 'Vé này không thể hủy'
+            ], 400);
+        }
+
+        DB::transaction(function () use ($booking) {
+            $booking->update(['status' => 'cancelled']);
+
+            $booking->tickets()->update(['status' => 'cancelled']);
+            $booking->passengers()->update(['status' => 'cancelled']);
+
+            $booking->schedule->increment(
+                'seats_available',
+                $booking->num_passengers
+            );
+        });
+
+        return response()->json([
+            'message' => 'Hủy vé thành công'
+        ]);
     }
 }

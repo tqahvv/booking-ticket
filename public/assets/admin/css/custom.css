@@ -152,6 +152,17 @@
     margin: 10px auto;
 }
 
+.msg_list li.unread {
+    background-color: #f5f7fa;
+    font-weight: 600;
+}
+
+.msg_list li.read {
+    background-color: #fff;
+    opacity: 0.7;
+}
+
+
 /* .btn-toggle-status {
     width: 90px;
     text-transform: capitalize;

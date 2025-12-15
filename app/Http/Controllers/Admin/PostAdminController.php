@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class PostController extends Controller
+class PostAdminController extends Controller
 {
     public function index()
     {

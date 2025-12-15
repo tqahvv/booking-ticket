@@ -162,15 +162,25 @@ class BookingController extends Controller
             ? $request->selected_seats
             : explode(',', $request->selected_seats);
 
+        $expectedSeats = (int) $request->seats;
+
+        if (count($seats) !== $expectedSeats) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Bạn phải chọn đúng {$expectedSeats} ghế."
+            ], 422);
+        }
+
         session([
             'selected_schedule_id' => $request->schedule_id,
             'selected_pickup_id'   => $request->pickup_id,
             'selected_dropoff_id'  => $request->dropoff_id,
             'selected_seats'       => $seats,
-            'num_seats'            => $request->seats,
+            'num_seats'            => $expectedSeats,
             'total_price'          => $request->total_price,
             'discount_amount'      => 0,
             'final_price'          => $request->total_price,
+            'seat_selected_at'     => now(),
         ]);
 
         return response()->json(['status' => 'ok']);
@@ -257,6 +267,15 @@ class BookingController extends Controller
         $finalPrice      = (float)$request->final_price;
         $promotionId     = $request->promotion_id ?? null;
 
+        $selectedSeats = explode(',', $request->selected_seats);
+        $expectedSeats = session('num_seats');
+
+        if (count($selectedSeats) !== (int)$expectedSeats) {
+            return back()->withErrors([
+                'error' => "Số ghế đã chọn không hợp lệ. Vui lòng chọn đúng {$expectedSeats} ghế."
+            ]);
+        }
+
         DB::beginTransaction();
         try {
             $booking = Booking::create([
@@ -272,6 +291,7 @@ class BookingController extends Controller
                 'promotion_id' => $promotionId,
                 'status' => 'pending',
                 'currency' => 'VND',
+                'expires_at' => now()->addMinutes(15),
             ]);
 
             foreach ($selectedSeats as $seat) {
@@ -344,6 +364,11 @@ class BookingController extends Controller
 
         $booking = Booking::with(['passengers'])->findOrFail($request->booking_id);
         $method = PaymentMethod::findOrFail($request->payment_method_id);
+
+        if ($booking->expires_at && now()->greaterThan($booking->expires_at)) {
+            return redirect()->route('home')
+                ->withErrors(['error' => 'Đơn đặt vé đã hết hạn. Vui lòng đặt lại.']);
+        }
 
         switch ($method->type) {
 
@@ -530,23 +555,31 @@ class BookingController extends Controller
                 ->withErrors(['error' => 'Sai chữ ký! Dữ liệu có thể bị thay đổi.']);
         }
 
+        $booking = Booking::where('code', $request->vnp_TxnRef)->first();
+
+        if (!$booking) {
+            return redirect()->route('home')
+                ->withErrors(['error' => 'Không tìm thấy đơn đặt vé.']);
+        }
+
         if ($request->vnp_ResponseCode == "00" && $request->vnp_TransactionStatus == "00") {
 
-            $booking = Booking::with('passengers')->where('code', $request->vnp_TxnRef)->firstOrFail();
+            DB::transaction(function () use ($booking) {
+                $booking->status = 'confirmed';
+                $booking->paid = true;
+                $booking->save();
 
-            $booking->status = 'confirmed';
-            $booking->paid = true;
-            $booking->save();
-
-            $this->tickets->generateTickets($booking);
+                $this->tickets->generateTickets($booking);
+            });
 
             return redirect()->route('booking.completed', [
                 'booking_id' => $booking->id
             ])->with('success', 'Thanh toán VNPAY thành công!');
         }
 
-        return redirect()->route('booking.payment')
-            ->withErrors(['error' => 'Thanh toán không thành công. Mã lỗi: ' . $request->vnp_ResponseCode]);
+        return redirect()->route('booking.payment', [
+            'booking_id' => $booking->id
+        ])->with('warning', 'Bạn đã hủy thanh toán VNPAY.');
     }
 
     public function completed(Request $request)

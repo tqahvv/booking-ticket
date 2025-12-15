@@ -40,12 +40,16 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-4"><strong>Ngày đặt:</strong>
+                            <div class="col-md-3"><strong>Ngày đặt:</strong>
                                 {{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y H:i') }}</div>
-                            <div class="col-md-4"><strong>Tổng tiền:</strong>
+                            <div class="col-md-3"><strong>Tổng tiền:</strong>
                                 {{ number_format($booking->total_price, 0, ',', '.') }} VNĐ
                             </div>
-                            <div class="col-md-4"><strong>Số khách:</strong> {{ $booking->num_passengers }}</div>
+                            <div class="col-md-3"><strong>Số khách:</strong> {{ $booking->num_passengers }}</div>
+                            <div class="col-md-3">
+                                <strong>Thanh toán:</strong>
+                                {{ $booking->paymentMethod->name ?? 'Chưa chọn' }}
+                            </div>
                         </div>
 
                         <h6 class="fw-bold mt-3">Hành khách</h6>
@@ -110,9 +114,24 @@
                             </table>
                         @endif
 
-                        <div class="d-flex gap-3 mt-3">
-                            <a href="{{ route('home') }}" class="btn btn-outline-primary">Về trang chủ</a>
-                            {{-- <a href="" class="btn btn-primary">In vé / Tải PDF</a> --}}
+                        <div class="d-flex gap-3 mt-4">
+                            <a href="{{ route('home') }}" class="btn btn-outline-primary">
+                                Về trang chủ
+                            </a>
+
+                            @if ($booking->canCancel())
+                                <button class="btn btn-danger btn-cancel-booking"
+                                    style="margin-left: 10px; display: flex; justify-content: center; align-items: center"
+                                    data-id="{{ $booking->id }}" data-email="{{ request('email') }}"
+                                    data-phone="{{ request('phone') }}">
+                                    Hủy vé
+                                </button>
+                            @elseif($booking->paymentMethod && $booking->paymentMethod->type === 'vnpay')
+                                <span class="text-muted fst-italic"
+                                    style="padding-left: 10px; display: flex; justify-content: center; align-items: center">
+                                    Vé thanh toán online hiện chưa hỗ trợ hủy
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </div>

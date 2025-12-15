@@ -30,7 +30,7 @@ class AdminAuthController extends Controller
         if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::guard('admin')->user();
 
-            if (!in_array($user->role->name, ['admin', 'staff'])) {
+            if (!in_array($user->role->name, ['admin', 'bus'])) {
                 Auth::guard('admin')->logout();
                 return back()->with('error', 'Tài khoản của bạn không có quyền truy cập trang quản trị.')->withInput();
             }

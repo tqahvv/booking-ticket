@@ -22,6 +22,7 @@ class Booking extends Model
         'num_passengers',
         'status',
         'currency',
+        'expires_at'
     ];
 
     public function user()
@@ -49,6 +50,11 @@ class Booking extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
     public function getStatusLabelAttribute()
     {
         return [
@@ -69,5 +75,26 @@ class Booking extends Model
             'expired' => 'dark',
             'waiting_transfer' => 'warning',
         ][$this->status] ?? 'secondary';
+    }
+
+    public function canCancel(): bool
+    {
+        if ($this->status === 'cancelled') {
+            return false;
+        }
+
+        if ($this->tickets()->where('status', 'used')->exists()) {
+            return false;
+        }
+
+        if (!$this->paymentMethod || $this->paymentMethod->type !== 'cod') {
+            return false;
+        }
+
+        // if ($this->schedule && $this->schedule->departure_time < now()) {
+        //     return false;
+        // }
+
+        return true;
     }
 }

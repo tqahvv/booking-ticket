@@ -33,13 +33,17 @@
         $dataTableRoutes = [
             'admin.posts.index',
             'admin.bookings.index',
-            'admin.schedules.index',
             'admin.scheduleTemplates.index',
             'admin.routes.index',
             'admin.operators.index',
             'admin.locations.index',
             'admin.vehicleTypes.index',
+            'admin.categories.index',
         ];
+    @endphp
+
+    @php
+        $dataContactRoutes = ['admin.contact.index'];
     @endphp
 
     @if (in_array(Route::currentRouteName(), $dataTableRoutes))
@@ -56,7 +60,9 @@
             rel="stylesheet">
     @endif
 
-    {{-- <link href="{{ asset('assets/admin/vendors/google-code-prettify/bin/prettify.min.css') }}" rel="stylesheet"> --}}
+    @if (in_array(Route::currentRouteName(), $dataContactRoutes))
+        <link href="{{ asset('assets/admin/vendors/google-code-prettify/bin/prettify.min.css') }}" rel="stylesheet">
+    @endif
 
     <link href="{{ asset('assets/admin/build/css/custom.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/admin/css/custom.css') }}" rel="stylesheet">
@@ -136,6 +142,13 @@
         <script src="{{ asset('assets/admin/vendors/jszip/dist/jszip.min.js') }}"></script>
         <script src="{{ asset('assets/admin/vendors/pdfmake/build/pdfmake.min.js') }}"></script>
         <script src="{{ asset('assets/admin/vendors/pdfmake/build/vfs_fonts.js') }}"></script>
+    @endif
+
+    @if (in_array(Route::currentRouteName(), $dataContactRoutes))
+        <script src="{{ asset('assets/admin/vendors/bootstrap-wysiwyg/js/bootstrap-wysiwyg.min.js') }}"></script>
+        <script src="{{ asset('assets/admin/vendors/jquery.hotkeys/jquery.hotkeys.js') }}"></script>
+        <script src="{{ asset('assets/admin/vendors/google-code-prettify/src/prettify.js') }}"></script>
+        <script src="{{ asset('assets/admin/js/ckeditor/ckeditor.js') }}"></script>
     @endif
 
     <script src="{{ asset('assets/admin/build/js/custom.js') }}"></script>

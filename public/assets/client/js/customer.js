@@ -722,4 +722,131 @@ $(document).ready(function () {
 
         $("#promoMessage").text("");
     });
+
+    //chatbot//
+
+    $("#chat-toggle").on("click", function () {
+        $("#chat-box").addClass("active");
+        loadMessages();
+    });
+
+    $("#chat-close").on("click", function () {
+        $("#chat-box").removeClass("active");
+    });
+
+    $("#send-btn").on("click", function () {
+        let msg = $("#message-input").val().trim();
+        if (!msg) return;
+
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+
+        $.post("/chatbot/send", { message: msg }, function (res) {
+            if (res.user) appendOne(res.user);
+            if (res.bot) appendOne(res.bot);
+            $("#message-input").val("");
+        }).fail(function () {
+            appendOne({
+                sender: "bot",
+                message: "Lỗi: không gửi được tin nhắn.",
+            });
+        });
+    });
+
+    $("#message-input").on("keypress", function (e) {
+        if (e.which === 13) {
+            $("#send-btn").click();
+            return false;
+        }
+    });
+
+    function loadMessages() {
+        $("#chat-messages").html("");
+        $.get("/chatbot/messages", function (msgs) {
+            if (!msgs || msgs.length === 0) {
+                $("#chat-messages").append(
+                    '<div class="bot-msg">Chào bạn! Tôi có thể giúp gì cho bạn?</div>'
+                );
+                return;
+            }
+
+            msgs.forEach(function (m) {
+                appendOne(m);
+            });
+            $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+        });
+    }
+
+    function appendOne(m) {
+        let cls = m.sender === "user" ? "user-msg" : "bot-msg";
+
+        $("#chat-messages").append(
+            `<div class="${cls}">${escapeHtml(m.message)}</div>`
+        );
+
+        $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+    }
+
+    function escapeHtml(text) {
+        return $("<div>").text(text).html();
+    }
+
+    //contact//
+    $("#contact-form").on("submit", function (e) {
+        let name = $('input[name="name"]').val().trim();
+        let email = $('input[name="email"]').val().trim();
+        let phone = $('input[name="phone"]').val().trim();
+        let message = $('textarea[name="message"]').val().trim();
+        let errorMessage = "";
+
+        if (name.length < 3) {
+            errorMessage += "Họ và tên phải có ít nhất 3 ký tự.<br>";
+        }
+
+        if (phone.length < 10 || phone.length > 11 || !/^\d+$/.test(phone)) {
+            errorMessage += "Số điện thoại phải từ 10–11 chữ số.<br>";
+        }
+
+        let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errorMessage += "Email không hợp lệ.<br>";
+        }
+
+        if (message.length < 5) {
+            errorMessage += "Nội dung phải có ít nhất 5 ký tự.<br>";
+        }
+
+        if (errorMessage !== "") {
+            toastr.error(errorMessage, "Lỗi");
+            e.preventDefault();
+        }
+    });
+
+    $(".btn-cancel-booking").on("click", function () {
+        if (!confirm("Bạn có chắc chắn muốn hủy vé này?")) return;
+
+        const bookingId = $(this).data("id");
+        const email = $(this).data("email");
+        const phone = $(this).data("phone");
+
+        $.ajax({
+            url: `/booking/${bookingId}/cancel`,
+            method: "POST",
+            data: {
+                _token: $('meta[name="csrf-token"]').attr("content"),
+                email: email,
+                phone: phone,
+            },
+            success: function (res) {
+                alert(res.message);
+                location.reload();
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON?.message || "Có lỗi xảy ra");
+            },
+        });
+    });
 });

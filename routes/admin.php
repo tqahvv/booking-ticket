@@ -2,27 +2,30 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BookingAdminController;
+use App\Http\Controllers\Admin\CategoryAdminController;
+use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LocationAdminController;
 use App\Http\Controllers\Admin\OperatorAdminController;
-use App\Http\Controllers\Admin\PostController;
+use App\Http\Controllers\Admin\PostAdminController;
 use App\Http\Controllers\Admin\RouteAdminController;
-use App\Http\Controllers\Admin\ScheduleAdminController;
 use App\Http\Controllers\Admin\ScheduleTemplateAdminController;
+use App\Http\Controllers\Admin\TicketAdminController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleTypeAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
 
-    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::middleware('guest:admin')->get('login', [AdminAuthController::class, 'showLoginForm'])
+        ->name('admin.login');
     Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
 
 
     Route::get('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
-    Route::middleware(['auth.custom'])->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::middleware(['auth:admin', 'permission:view_dashboard'])->group(function () {
+        Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     });
 
     Route::middleware(['auth:admin', 'permission:manage_users'])->group(function () {
@@ -30,34 +33,41 @@ Route::prefix('admin')->group(function () {
         Route::post('/users/updateStatus', [UserController::class, 'updateStatus']);
     });
 
-    Route::middleware(['auth:admin', 'permission:manage_posts'])->group(function () {
-        Route::get('/post/add', [PostController::class, 'showFormAddPost'])->name('admin.post.add');
-        Route::post('/post/add', [PostController::class, 'addPost'])->name('admin.post.add');
-        Route::post('/post/upload-image', [PostController::class, 'uploadImage'])->name('admin.post.upload-image');
-        Route::post('/posts/{id}', [PostController::class, 'delete'])->name('posts.delete');
+    Route::middleware(['auth:admin', 'permission:manage_categories'])->group(function () {
+        Route::get('/categories', [CategoryAdminController::class, 'index'])->name('admin.categories.index');
+        Route::get('/categories/add', [CategoryAdminController::class, 'showFormAddCate'])->name('admin.categories.add');
+        Route::post('/categories/add', [CategoryAdminController::class, 'addCate'])->name('admin.categories.store');
+        Route::post('/categories/{id}', [CategoryAdminController::class, 'update'])->name('admin.categories.update');
+        Route::delete('/categories/{id}', [CategoryAdminController::class, 'delete'])->name('admin.categories.delete');
+    });
 
-        Route::get('/post', [PostController::class, 'index'])->name('admin.posts.index');
-        Route::post('/post/update', [PostController::class, 'updatePost']);
-        Route::post('/posts/toggleStatus/{id}', [PostController::class, 'toggleStatus'])->name('posts.toggleStatus');
+    Route::middleware(['auth:admin', 'permission:manage_posts'])->group(function () {
+        Route::get('/post/add', [PostAdminController::class, 'showFormAddPost'])->name('admin.post.add');
+        Route::post('/post/add', [PostAdminController::class, 'addPost'])->name('admin.post.add');
+        Route::post('/post/upload-image', [PostAdminController::class, 'uploadImage'])->name('admin.post.upload-image');
+        Route::post('/posts/{id}', [PostAdminController::class, 'delete'])->name('posts.delete');
+
+        Route::get('/post', [PostAdminController::class, 'index'])->name('admin.posts.index');
+        Route::post('/post/update', [PostAdminController::class, 'updatePost']);
+        Route::post('/posts/toggleStatus/{id}', [PostAdminController::class, 'toggleStatus'])->name('posts.toggleStatus');
     });
 
     Route::middleware(['auth:admin', 'permission:manage_bookings'])->group(function () {
         Route::get('/bookings', [BookingAdminController::class, 'index'])->name('admin.bookings.index');
         Route::get('/bookings/{id}', [BookingAdminController::class, 'show'])->name('admin.bookings.show');
-        Route::post('/bookings/{id}/update-status', [BookingAdminController::class, 'updateStatus'])
-            ->name('admin.bookings.updateStatus');
+        Route::post('/bookings/{id}/update-status', [BookingAdminController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
+        Route::post('/bookings/{id}/confirm-transfer', [BookingAdminController::class, 'confirmTransfer'])->name('admin.bookings.confirmTransfer');
+        Route::delete('/bookings/{id}', [BookingAdminController::class, 'delete'])->name('admin.bookings.delete');
+    });
 
-        Route::post('/bookings/{id}/confirm-transfer', [BookingAdminController::class, 'confirmTransfer'])
-            ->name('admin.bookings.confirmTransfer');
-
-        Route::delete('/bookings/{id}', [BookingAdminController::class, 'delete'])
-            ->name('admin.bookings.delete');
+    Route::middleware(['auth:admin', 'permission:booking_tickets'])->group(function () {
+        Route::get('/tickets', [TicketAdminController::class, 'index'])->name('admin.tickets.index');
+        Route::get('/tickets/{id}', [TicketAdminController::class, 'show'])->name('admin.tickets.show');
+        Route::post('/tickets/{id}/update-status', [TicketAdminController::class, 'updateStatus'])->name('admin.tickets.updateStatus');
+        Route::delete('/tickets/{id}', [TicketAdminController::class, 'delete'])->name('admin.tickets.delete');
     });
 
     Route::middleware(['auth:admin', 'permission:manage_schedules'])->group(function () {
-        Route::get('/schedules', [ScheduleAdminController::class, 'index'])->name('admin.schedules.index');
-        Route::post('/schedules/{id}/update', [ScheduleAdminController::class, 'update'])->name('admin.schedules.update');
-
         Route::get('/schedule-templates', [ScheduleTemplateAdminController::class, 'index'])->name('admin.scheduleTemplates.index');
         Route::get('/schedule-templates/add', [ScheduleTemplateAdminController::class, 'showFormAdd'])->name('admin.scheduleTemplates.add');
         Route::post('/schedule-templates/add', [ScheduleTemplateAdminController::class, 'add'])->name('admin.scheduleTemplates.store');
@@ -95,5 +105,10 @@ Route::prefix('admin')->group(function () {
         Route::post('/vehicle-types/add', [VehicleTypeAdminController::class, 'add'])->name('admin.vehicleTypes.store');
         Route::post('/vehicle-types/update/{id}', [VehicleTypeAdminController::class, 'update'])->name('admin.vehicleTypes.update');
         Route::post('/vehicle-types/delete/{id}', [VehicleTypeAdminController::class, 'delete'])->name('admin.vehicleTypes.delete');
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_contacts'])->group(function () {
+        Route::get('/contact', [ContactAdminController::class, 'index'])->name('admin.contact.index');
+        Route::post('/contact/reply', [ContactAdminController::class, 'replyContact']);
     });
 });
