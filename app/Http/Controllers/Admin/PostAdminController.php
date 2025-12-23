@@ -22,7 +22,7 @@ class PostAdminController extends Controller
     {
         $post = Post::findOrFail($request->id);
 
-        $post->title   = $request->input('title');
+        $post->title = $request->input('title');
         $post->excerpt = $request->input('excerpt');
         $post->content = $request->input('content');
 
@@ -38,11 +38,11 @@ class PostAdminController extends Controller
         $post->save();
 
         return response()->json([
-            "status"     => "success",
-            "title"      => $post->title,
-            "content"    => $post->content,
-            "excerpt"    => Str::limit(strip_tags($post->excerpt), 300),
-            "image_url"  => $post->image_url,
+            "status" => "success",
+            "title" => $post->title,
+            "content" => $post->content,
+            "excerpt" => Str::limit(strip_tags($post->excerpt), 300),
+            "image_url" => $post->image_url,
         ]);
     }
 
@@ -109,13 +109,13 @@ class PostAdminController extends Controller
         }
 
         $post = Post::create([
-            'title'        => $request->input('title'),
-            'slug'         => $slug,
-            'excerpt'      => $request->input('excerpt'),
-            'content'      => $content,
-            'image_url'    => $imagePath,
-            'user_id'      => Auth::id(),
-            'status'       => 'draft',
+            'title' => $request->input('title'),
+            'slug' => $slug,
+            'excerpt' => $request->input('excerpt'),
+            'content' => $content,
+            'image_url' => $imagePath,
+            'user_id' => Auth::id(),
+            'status' => 'draft',
             'published_at' => now(),
         ]);
 
