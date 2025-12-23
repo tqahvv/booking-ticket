@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LocationAdminController;
 use App\Http\Controllers\Admin\OperatorAdminController;
+use App\Http\Controllers\Admin\PaymentAdminController;
 use App\Http\Controllers\Admin\PostAdminController;
+use App\Http\Controllers\Admin\PromotionAdminController;
 use App\Http\Controllers\Admin\RouteAdminController;
 use App\Http\Controllers\Admin\ScheduleTemplateAdminController;
 use App\Http\Controllers\Admin\TicketAdminController;
@@ -25,7 +27,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
     Route::middleware(['auth:admin', 'permission:view_dashboard'])->group(function () {
-        Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     });
 
     Route::middleware(['auth:admin', 'permission:manage_users'])->group(function () {
@@ -56,7 +58,6 @@ Route::prefix('admin')->group(function () {
         Route::get('/bookings', [BookingAdminController::class, 'index'])->name('admin.bookings.index');
         Route::get('/bookings/{id}', [BookingAdminController::class, 'show'])->name('admin.bookings.show');
         Route::post('/bookings/{id}/update-status', [BookingAdminController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
-        Route::post('/bookings/{id}/confirm-transfer', [BookingAdminController::class, 'confirmTransfer'])->name('admin.bookings.confirmTransfer');
         Route::delete('/bookings/{id}', [BookingAdminController::class, 'delete'])->name('admin.bookings.delete');
     });
 
@@ -65,6 +66,12 @@ Route::prefix('admin')->group(function () {
         Route::get('/tickets/{id}', [TicketAdminController::class, 'show'])->name('admin.tickets.show');
         Route::post('/tickets/{id}/update-status', [TicketAdminController::class, 'updateStatus'])->name('admin.tickets.updateStatus');
         Route::delete('/tickets/{id}', [TicketAdminController::class, 'delete'])->name('admin.tickets.delete');
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_payments'])->group(function () {
+        Route::get('/payments', [PaymentAdminController::class, 'index'])->name('admin.payments.index');
+        Route::post('/payments/{id}/confirm-cod', [PaymentAdminController::class, 'confirmCOD'])->name('admin.payments.confirm-cod');
+        Route::get('/payments/{id}', [PaymentAdminController::class, 'show'])->name('admin.payments.show');
     });
 
     Route::middleware(['auth:admin', 'permission:manage_schedules'])->group(function () {
@@ -110,5 +117,14 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['auth:admin', 'permission:manage_contacts'])->group(function () {
         Route::get('/contact', [ContactAdminController::class, 'index'])->name('admin.contact.index');
         Route::post('/contact/reply', [ContactAdminController::class, 'replyContact']);
+    });
+
+    Route::middleware(['auth:admin', 'permission:manage_promotions'])->group(function () {
+        Route::get('/promotions', [PromotionAdminController::class, 'index'])->name('admin.promotions.index');
+        Route::post('/promotions/toggle-status/{id}', [PromotionAdminController::class, 'toggleStatus'])->name('admin.promotions.toggleStatus');
+        Route::get('/promotions/add', [PromotionAdminController::class, 'showFormAdd'])->name('admin.promotions.add');
+        Route::post('/promotions/add', [PromotionAdminController::class, 'add'])->name('admin.promotions.store');
+        Route::post('/promotions/update/{id}', [PromotionAdminController::class, 'update'])->name('admin.promotions.update');
+        Route::post('/promotions/delete/{id}', [PromotionAdminController::class, 'delete'])->name('admin.promotions.delete');
     });
 });

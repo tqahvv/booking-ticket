@@ -14,7 +14,7 @@ class PostAdminController extends Controller
 {
     public function index()
     {
-        $posts = Post::with('author')->get();
+        $posts = Post::with('author')->orderBy('published_at', 'DESC')->get();
         return view('admin.pages.posts', compact('posts'));
     }
 

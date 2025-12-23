@@ -388,10 +388,13 @@ $(document).ready(function () {
 
             $("#d-ticket-code").text(t.ticket_code);
             $("#d-seat").text(t.seat_number ?? "-");
-            $("#d-time").text(t.valid_from + " → " + t.valid_to);
+            $("#d-time").text(
+                formatDateTimeUTC(t.valid_from) +
+                    " → " +
+                    formatDateTimeUTC(t.valid_to)
+            );
             $("#d-status").text(ticketStatusText[t.status] ?? t.status);
             $("#d-payment-method").text(paymentMethod);
-
             $("#d-passenger-name").text(passenger?.passenger_name ?? "-");
             $("#d-passenger-phone").text(passenger?.passenger_phone ?? "-");
             $("#d-passenger-email").text(passenger?.passenger_email ?? "-");
@@ -400,74 +403,122 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on("click", ".btn-delete-ticket", function () {
-        if (!confirm("Bạn có chắc chắn muốn xóa vé này?")) return;
+    function formatDateTimeUTC(dateStr) {
+        if (!dateStr) return "-";
 
-        let id = $(this).data("id");
-        let url = $(this).data("url");
+        const [datePart, timePart] = dateStr.split("T");
+
+        const [year, month, day] = datePart.split("-");
+        const [hour, minute] = timePart.split(":");
+
+        return `${hour}:${minute} ${day}/${month}/${year}`;
+    }
+
+    //manage_payments
+    $(".btn-confirm-cod").on("click", function () {
+        var button = $(this);
+        var paymentId = button.data("id");
+
+        if (
+            !confirm(
+                "Bạn có chắc chắn xác nhận đã thanh toán COD cho đơn này không?"
+            )
+        ) {
+            return;
+        }
 
         $.ajax({
-            url: url,
-            type: "DELETE",
+            url: "/admin/payments/" + paymentId + "/confirm-cod",
+            type: "POST",
             data: {
                 _token: $('meta[name="csrf-token"]').attr("content"),
             },
-            success: function (res) {
-                $("#ticket-row-" + id).remove();
-                toastr.success(res.message);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? "Xóa vé thất bại");
-            },
-        });
-    });
-
-    //manage_schedule
-    $(document).on("submit", ".update-schedule-form", function (e) {
-        e.preventDefault();
-
-        let form = $(this);
-        let url = form.data("url");
-        let id = form.data("id");
-
-        let formData = new FormData(this);
-
-        $.ajax({
-            url: url,
-            method: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-                if (res.success) {
-                    $("#modalUpdate-" + id).modal("hide");
-
-                    let row = $("#schedule-row-" + id);
-                    row.find("td:nth-child(2)").text(
-                        formData.get("departure_datetime").replace("T", " ")
+            success: function (response) {
+                if (response.success) {
+                    var statusCell = $(
+                        "#payment-row-" + paymentId + " td:nth-child(6)"
                     );
-                    row.find("td:nth-child(4)").text(
-                        new Intl.NumberFormat("vi-VN").format(
-                            formData.get("base_fare")
-                        ) + " VNĐ"
+                    statusCell.html(
+                        '<span class="badge badge-success" style="padding: .25rem .5rem; font-size: .875rem; line-height: 1.5; color: #fff">Đã thanh toán</span>'
                     );
 
-                    toastr.success(res.message);
+                    button.remove();
+                    alert("Xác nhận thanh toán COD thành công!");
+                } else {
+                    alert("Có lỗi xảy ra. Vui lòng thử lại.");
                 }
             },
             error: function (xhr) {
-                let msg = "Lỗi server";
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    msg = Object.values(xhr.responseJSON.errors)
-                        .flat()
-                        .join("\n");
-                }
+                var msg =
+                    xhr.responseJSON && xhr.responseJSON.error
+                        ? xhr.responseJSON.error
+                        : "Có lỗi xảy ra. Vui lòng thử lại.";
                 alert(msg);
             },
         });
     });
 
-    $("[id^=update-schedule-template-]").on("submit", function (e) {
+    $(document).on("click", ".btn-view-payment", function () {
+        let id = $(this).data("id");
+
+        $.get("/admin/payments/" + id, function (res) {
+            if (!res.success) {
+                toastr.error(res.message);
+                return;
+            }
+
+            let p = res.payment;
+            let passenger = p.booking.passengers.length
+                ? p.booking.passengers[0]
+                : null;
+            let paymentType =
+                p.paymentMethod && p.paymentMethod.type
+                    ? p.paymentMethod.type
+                    : "cod";
+
+            $("#d-transaction-code").text(p.transaction_code ?? "COD");
+            $("#d-ticket-code").text(p.booking.code);
+            $("#d-seat").text(passenger?.seat_number ?? "-");
+            $("#d-time").text(
+                formatDateTimeUTC(p.booking.schedule.departure_datetime) +
+                    " → " +
+                    formatDateTimeUTC(p.booking.schedule.arrival_datetime)
+            );
+
+            $("#d-payment-method").text(
+                p.paymentMethod?.name ?? (paymentType === "cod" ? "COD" : "-")
+            );
+            $("#d-passenger-name").text(passenger?.passenger_name ?? "-");
+            $("#d-passenger-phone").text(passenger?.passenger_phone ?? "-");
+            $("#d-passenger-email").text(passenger?.passenger_email ?? "-");
+            $("#d-amount").text(
+                new Intl.NumberFormat("vi-VN").format(p.amount) +
+                    " " +
+                    (p.currency ?? "VND")
+            );
+            function formatDateTimeUTC(dateStr) {
+                if (!dateStr) return "-";
+                let dt = new Date(dateStr);
+                return dt.toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                });
+            }
+
+            $("#d-created-at").text(formatDateTimeUTC(p.created_at));
+            $("#d-paid-at").text(formatDateTimeUTC(p.paid_at));
+
+            $("#ticketDetailModal").modal("show");
+        });
+    });
+
+    //manage_schedule
+
+    $(document).on("submit", "[id^=update-schedule-template-]", function (e) {
         e.preventDefault();
 
         let form = $(this);
@@ -475,7 +526,7 @@ $(document).ready(function () {
         let url = "/admin/schedule-templates/" + id;
 
         let formData = form.serialize();
-        console.log(formData);
+
         $.ajax({
             url: url,
             type: "POST",
@@ -485,7 +536,7 @@ $(document).ready(function () {
             },
             success: function (res) {
                 if (!res.success) {
-                    alert("Có lỗi xảy ra!");
+                    toastr.error("Có lỗi xảy ra");
                     return;
                 }
 
@@ -495,9 +546,7 @@ $(document).ready(function () {
                 row.find("td:eq(4)").text(res.data.travel_duration_minutes);
                 row.find("td:eq(5)").text(res.data.running_days.join(","));
                 row.find("td:eq(6)").text(
-                    Number(res.data.base_fare).toLocaleString("vi-VN", {
-                        minimumFractionDigits: 0,
-                    }) + " VNĐ"
+                    Number(res.data.base_fare).toLocaleString("vi-VN") + " VNĐ"
                 );
                 row.find("td:eq(7)").text(res.data.default_seats);
 
@@ -506,8 +555,16 @@ $(document).ready(function () {
                 toastr.success("Cập nhật thành công!");
             },
             error: function (xhr) {
-                console.log(xhr.responseText);
-                alert("Lỗi server khi update.");
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    let message = Object.values(xhr.responseJSON.errors)
+                        .flat()
+                        .join("<br>");
+                    toastr.error(message);
+                } else if (xhr.status === 403) {
+                    toastr.error("Bạn không có quyền thực hiện thao tác này");
+                } else {
+                    toastr.error("Có lỗi hệ thống xảy ra, vui lòng thử lại");
+                }
             },
         });
     });
@@ -532,13 +589,17 @@ $(document).ready(function () {
                 $("#form-result").html("");
             },
             error: function (xhr) {
-                let errors = xhr.responseJSON?.errors || {};
-                let html = '<div class="alert alert-danger"><ul>';
-                $.each(errors, function (key, value) {
-                    html += "<li>" + value[0] + "</li>";
-                });
-                html += "</ul></div>";
-                $("#form-result").html(html);
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    let message = Object.values(xhr.responseJSON.errors)
+                        .flat()
+                        .join("<br>");
+
+                    toastr.error(message);
+                } else if (xhr.status === 403) {
+                    toastr.error("Bạn không có quyền thực hiện thao tác này");
+                } else {
+                    toastr.error("Có lỗi hệ thống xảy ra, vui lòng thử lại");
+                }
             },
         });
     });
@@ -563,7 +624,17 @@ $(document).ready(function () {
                 toastr.success(response.message);
             },
             error: function (xhr) {
-                alert("Có lỗi xảy ra, vui lòng thử lại.");
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    let message = Object.values(xhr.responseJSON.errors)
+                        .flat()
+                        .join("<br>");
+
+                    toastr.error(message);
+                } else if (xhr.status === 403) {
+                    toastr.error("Bạn không có quyền thực hiện thao tác này");
+                } else {
+                    toastr.error("Có lỗi hệ thống xảy ra, vui lòng thử lại");
+                }
             },
         });
     });
@@ -592,15 +663,24 @@ $(document).ready(function () {
                 let row = $("#route-row-" + id);
                 row.find("td:eq(1)").text(res.data.origin_name);
                 row.find("td:eq(2)").text(res.data.destination_name);
-                row.find("td:eq(3)").text(res.data.operator_name);
-                row.find("td:eq(4)").text(res.data.distance);
-                row.find("td:eq(5)").text(res.data.description);
-
+                row.find("td:eq(3)").text(res.data.distance);
+                row.find("td:eq(4)").text(res.data.description ?? "");
                 $("#modalUpdate-" + id).modal("hide");
                 toastr.success("Cập nhật thành công!");
             },
             error: function (xhr) {
-                alert("Lỗi server khi update.");
+                if (xhr.status === 422) {
+                    let errors = xhr.responseJSON.errors;
+                    let message = "";
+
+                    $.each(errors, function (key, value) {
+                        message += value[0] + "\n";
+                    });
+
+                    toastr.error(message);
+                } else {
+                    toastr.error("Lỗi server khi update.");
+                }
             },
         });
     });
@@ -653,13 +733,18 @@ $(document).ready(function () {
                 $("#form-result").html("");
             },
             error: function (xhr) {
-                let errors = xhr.responseJSON?.errors || {};
-                let html = '<div class="alert alert-danger"><ul>';
-                $.each(errors, function (key, value) {
-                    html += "<li>" + value[0] + "</li>";
-                });
-                html += "</ul></div>";
-                $("#form-result").html(html);
+                if (xhr.status === 422) {
+                    let errors = xhr.responseJSON.errors;
+                    let message = "";
+
+                    $.each(errors, function (key, value) {
+                        message += value[0] + "\n";
+                    });
+
+                    toastr.error(message);
+                } else {
+                    toastr.error("Lỗi server khi thêm tuyến đường.");
+                }
             },
         });
     });
@@ -959,6 +1044,176 @@ $(document).ready(function () {
         });
     });
 
+    //manage_promotions
+    $(document).on("change", ".status-select", function () {
+        let id = $(this).data("id");
+        let value = $(this).val();
+
+        $.ajax({
+            url: "/admin/promotions/toggle-status/" + id,
+            type: "POST",
+            data: { is_active: value },
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    toastr.success("Cập nhật trạng thái thành công!");
+                } else {
+                    toastr.error("Cập nhật trạng thái thất bại!");
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi server khi cập nhật trạng thái!");
+            },
+        });
+    });
+
+    $(document).on("submit", "[id^=update-promo-]", function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let id = form.attr("id").replace("update-promo-", "");
+        let url = "/admin/promotions/update/" + id;
+
+        let formData = new FormData(form[0]);
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (!res.success) {
+                    alert("Có lỗi xảy ra!");
+                    return;
+                }
+
+                let promo = res.data;
+                let row = $("#promotion-row-" + id);
+
+                row.find("td:eq(0)").text(promo.code);
+                row.find("td:eq(1)").text(promo.description);
+                let discountTypeText =
+                    promo.discount_type === "percentage"
+                        ? "Giảm %"
+                        : promo.discount_type === "fixed_amount"
+                        ? "Giảm tiền mặt"
+                        : promo.discount_type;
+                row.find("td:eq(2)").text(discountTypeText);
+                let discountValueText =
+                    promo.discount_type === "percentage"
+                        ? promo.discount_value + "%"
+                        : promo.discount_type === "fixed_amount"
+                        ? parseFloat(promo.discount_value).toLocaleString(
+                              "vi-VN"
+                          ) + " VNĐ"
+                        : promo.discount_value;
+                row.find("td:eq(3)").text(discountValueText);
+                let validFrom = new Date(promo.valid_from);
+                let validTo = new Date(promo.valid_to);
+                let formatDate = (d) =>
+                    ("0" + d.getDate()).slice(-2) +
+                    "-" +
+                    ("0" + (d.getMonth() + 1)).slice(-2) +
+                    "-" +
+                    d.getFullYear();
+                row.find("td:eq(4)").text(
+                    formatDate(validFrom) + " - " + formatDate(validTo)
+                );
+                row.find("td:eq(5)").text(promo.usage_limit_per_user ?? "-");
+                row.find("td:eq(6)").text(promo.total_usage_limit ?? "-");
+                row.find("td:eq(7)").text(
+                    parseFloat(promo.min_booking_amount).toLocaleString(
+                        "vi-VN"
+                    ) + " VNĐ"
+                );
+                row.find("td:eq(8) select.status-select").val(
+                    promo.is_active ? "1" : "0"
+                );
+
+                $("#modalUpdate-" + id).modal("hide");
+                toastr.success("Cập nhật mã giảm giá thành công!");
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let msg = Object.values(errors).flat().join("\n");
+                alert("Lỗi: \n" + msg);
+            },
+        });
+    });
+
+    $(document).on("click", ".btn-delete-promotion", function (e) {
+        e.preventDefault();
+
+        let btn = $(this);
+        let id = btn.data("id");
+
+        if (!confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) return;
+
+        $.ajax({
+            url: "/admin/promotions/delete/" + id,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    $("#promotion-row-" + id).remove();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.message || "Có lỗi xảy ra khi xóa!");
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi server khi xóa điểm.");
+            },
+        });
+    });
+
+    $("#add-promotion-form").submit(function (e) {
+        e.preventDefault();
+
+        let form = $(this);
+        let url = form.data("store-url");
+        let formData = new FormData(form[0]);
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    form.trigger("reset");
+                    $("#form-result").html("");
+                }
+            },
+            error: function (xhr) {
+                let errors = xhr.responseJSON?.errors || {};
+                let html = '<div class="alert alert-danger"><ul>';
+
+                $.each(errors, function (key, value) {
+                    html += "<li>" + value[0] + "</li>";
+                });
+
+                html += "</ul></div>";
+                $("#form-result").html(html);
+
+                toastr.error(xhr.responseJSON?.message || "Có lỗi xảy ra!");
+            },
+        });
+    });
+
     //contact//
     if ($("#editor-contact").length) {
         CKEDITOR.replace("editor-contact");
@@ -1047,4 +1302,74 @@ $(document).ready(function () {
             },
         });
     });
+
+    //bar char
+    if ($("#dailyRevenueChart").length) {
+        let ctx = document.getElementById("dailyRevenueChart");
+        let labels = JSON.parse(ctx.dataset.labels);
+        let values = JSON.parse(ctx.dataset.values);
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Doanh thu (VND)",
+                        data: values,
+                        backgroundColor: "#3498DB",
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    yAxes: [
+                        {
+                            ticks: {
+                                beginAtZero: true,
+                                callback: (value) =>
+                                    value.toLocaleString() + " đ",
+                            },
+                        },
+                    ],
+                },
+            },
+        });
+    }
+
+    if ($("#monthlyRevenueChart").length) {
+        let ctx = document.getElementById("monthlyRevenueChart");
+        let labels = JSON.parse(ctx.dataset.labels);
+        let values = JSON.parse(ctx.dataset.values);
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Doanh thu theo tháng",
+                        data: values,
+                        borderColor: "#26B99A",
+                        backgroundColor: "rgba(38,185,154,0.2)",
+                        fill: true,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    yAxes: [
+                        {
+                            ticks: {
+                                callback: (value) =>
+                                    value.toLocaleString() + " đ",
+                            },
+                        },
+                    ],
+                },
+            },
+        });
+    }
 });

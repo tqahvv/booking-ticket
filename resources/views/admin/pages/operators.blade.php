@@ -32,10 +32,10 @@
                                         <table id="datatable-buttons" class="table table-striped table-bordered">
                                             <thead>
                                                 <tr>
-                                                    <th>Hãng xe</th>
-                                                    <th>Mô tả</th>
-                                                    <th>Đánh giá</th>
-                                                    <th>Liên hệ</th>
+                                                    <th class="text-center align-middle">Hãng xe</th>
+                                                    <th class="text-center align-middle">Mô tả</th>
+                                                    <th class="text-center align-middle">Đánh giá</th>
+                                                    <th class="text-center align-middle">Liên hệ</th>
                                                     <th></th>
                                                     <th></th>
                                                 </tr>
@@ -44,22 +44,24 @@
                                             <tbody>
                                                 @foreach ($operators as $op)
                                                     <tr id="operator-row-{{ $op->id }}">
-                                                        <td>{{ $op->name }}</td>
-                                                        <td>{{ $op->description }}</td>
-                                                        <td>{{ $op->rating }}</td>
-                                                        <td>{{ $op->contact_info }}</td>
+                                                        <td class="text-center align-middle">{{ $op->name }}</td>
+                                                        <td class="text-center align-middle">{{ $op->description }}</td>
+                                                        <td class="text-center align-middle">{{ $op->rating }}</td>
+                                                        <td class="text-center align-middle">{{ $op->contact_info }}</td>
 
-                                                        <td style="text-align:center">
-                                                            <a class="btn btn-app" data-toggle="modal"
-                                                                data-target="#updateOperator-{{ $op->id }}">
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm" data-toggle="modal"
+                                                                data-target="#updateOperator-{{ $op->id }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-edit"></i> Chỉnh sửa
                                                             </a>
                                                         </td>
 
-                                                        <td style="text-align:center">
-                                                            <a class="btn btn-app btn-delete-operator"
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-operator"
                                                                 data-id="{{ $op->id }}"
-                                                                data-url="{{ route('admin.operators.delete', $op->id) }}">
+                                                                data-url="{{ route('admin.operators.delete', $op->id) }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-trash"></i> Xóa
                                                             </a>
                                                         </td>

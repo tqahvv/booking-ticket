@@ -38,7 +38,7 @@
                     @endif
 
                     @if ($adminUser->role->permissions->contains('name', 'manage_categories'))
-                        <li><a href="#"><i class="fa fa-lock"></i> Quản lý danh mục bài viết <span
+                        <li><a href="#"><i class="fa fa-sitemap"></i> Quản lý danh mục bài viết <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('admin.categories.add') }}">Thêm mới danh mục bài viết</a></li>
@@ -48,7 +48,7 @@
                     @endif
 
                     @if ($adminUser->role->permissions->contains('name', 'manage_posts'))
-                        <li><a href="#"><i class="fa fa-bell"></i> Quản lý bài viết <span
+                        <li><a href="#"><i class="fa fa-newspaper-o"></i> Quản lý bài viết <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('admin.post.add') }}">Thêm mới bài viết</a></li>
@@ -58,7 +58,7 @@
                     @endif
 
                     @if ($adminUser->role->permissions->contains('name', 'manage_bookings'))
-                        <li><a href="#"><i class="fa fa-table"></i> Quản lý đặt chỗ <span
+                        <li><a href="#"><i class="fa fa-calendar-check-o"></i> Quản lý đặt chỗ <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('admin.bookings.index') }}">Danh sách đặt chỗ</a></li>
@@ -66,8 +66,17 @@
                         </li>
                     @endif
 
+                    @if ($adminUser->role->permissions->contains('name', 'manage_payments'))
+                        <li><a href="#"><i class="fa fa-table"></i> Quản lý thanh toán <span
+                                    class="fa fa-money"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.payments.index') }}">Danh sách thanh toán</a></li>
+                            </ul>
+                        </li>
+                    @endif
+
                     @if ($adminUser->role->permissions->contains('name', 'booking_tickets'))
-                        <li><a href="#"><i class="fa fa-table"></i> Quản lý vé xe <span
+                        <li><a href="#"><i class="fa fa-qrcode"></i> Quản lý vé xe <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('admin.tickets.index') }}">Danh sách vé xe</a></li>
@@ -76,7 +85,7 @@
                     @endif
 
                     @if ($adminUser->role->permissions->contains('name', 'manage_schedules'))
-                        <li><a href="#"><i class="fa fa-clone"></i> Quản lý chuyến xe <span
+                        <li><a href="#"><i class="fa fa-clock-o"></i> Quản lý chuyến xe <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('admin.scheduleTemplates.add') }}">Thêm mới chuyến xe</a></li>
@@ -86,7 +95,7 @@
                     @endif
 
                     @if ($adminUser->role->permissions->contains('name', 'manage_routes'))
-                        <li><a href="#"><i class="fa fa-road"></i> Quản lý tuyến đường <span
+                        <li><a href="#"><i class="fa fa-map-signs"></i> Quản lý tuyến đường <span
                                     class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('admin.routes.add') }}">Thêm mới tuyến đường</a></li>
@@ -125,8 +134,19 @@
                         </li>
                     @endif
 
+                    @if ($adminUser->role->permissions->contains('name', 'manage_promotions'))
+                        <li><a href="#"><i class="fa fa-ticket"></i> Quản lý mã giảm giá <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ route('admin.promotions.add') }}">Thêm mới mã giảm giá</a></li>
+                                <li><a href="{{ route('admin.promotions.index') }}">Danh sách mã giảm giá</a></li>
+                            </ul>
+                        </li>
+                    @endif
+
                     @if ($adminUser->role->permissions->contains('name', 'manage_contacts'))
-                        <li><a href="{{ route('admin.contact.index') }}"><i class="fa fa-clone"></i>Quản lý liên hệ
+                        <li><a href="{{ route('admin.contact.index') }}"><i class="fa fa-envelope-o"></i>Quản lý liên
+                                hệ
                             </a>
                         </li>
                     @endif

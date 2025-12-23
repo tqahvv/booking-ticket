@@ -36,12 +36,12 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr>
-                                                    <th>#</th>
-                                                    <th>Điểm đi</th>
-                                                    <th>Điểm đến</th>
-                                                    <th>Nhà xe</th>
-                                                    <th>Khoảng cách (km)</th>
-                                                    <th>Mô tả</th>
+                                                    <th class="text-center align-middle">#</th>
+                                                    <th class="text-center align-middle">Điểm đi</th>
+                                                    <th class="text-center align-middle">Điểm đến</th>
+                                                    <th class="text-center align-middle">Nhà xe</th>
+                                                    <th class="text-center align-middle">Khoảng cách (km)</th>
+                                                    <th class="text-center align-middle">Mô tả</th>
                                                     <th></th>
                                                     <th></th>
                                                 </tr>
@@ -49,23 +49,26 @@
                                             <tbody>
                                                 @foreach ($routes as $route)
                                                     <tr id="route-row-{{ $route->id }}">
-                                                        <td>{{ $loop->iteration }}</td>
-                                                        <td>{{ $route->origin->name ?? '---' }}</td>
-                                                        <td>{{ $route->destination->name ?? '---' }}</td>
-                                                        <td>{{ $route->operator->name ?? '---' }}</td>
-                                                        <td>{{ $route->distance }}</td>
-                                                        <td>{{ $route->description }}</td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
-                                                            <a class="btn btn-app btn-update-route" data-toggle="modal"
-                                                                data-target="#modalUpdate-{{ $route->id }}">
+                                                        <td class="text-center align-middle">{{ $loop->iteration }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $route->origin->name ?? '---' }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $route->destination->name ?? '---' }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $route->operator->name ?? '---' }}</td>
+                                                        <td class="text-center align-middle">{{ $route->distance }}</td>
+                                                        <td class="text-center align-middle">{{ $route->description }}</td>
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm btn-update-route"
+                                                                data-toggle="modal"
+                                                                data-target="#modalUpdate-{{ $route->id }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-edit"></i>Chỉnh sửa
                                                             </a>
                                                         </td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
-                                                            <a class="btn btn-app btn-delete-route"
-                                                                data-id="{{ $route->id }}">
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-route"
+                                                                data-id="{{ $route->id }}" style="color: #fff">
                                                                 <i class="fa fa-trash"></i>Xóa
                                                             </a>
                                                         </td>
@@ -122,22 +125,6 @@
                                                                             </div>
                                                                         </div>
 
-                                                                        <div class="item form-group">
-                                                                            <label
-                                                                                class="col-form-label col-md-3 col-sm-3 label-align">Nhà
-                                                                                xe <span class="required">*</span></label>
-                                                                            <div class="col-md-6 col-sm-6">
-                                                                                <select name="operator_id"
-                                                                                    class="form-control" required>
-                                                                                    @foreach ($operators as $op)
-                                                                                        <option value="{{ $op->id }}"
-                                                                                            {{ $op->id == $route->operator_id ? 'selected' : '' }}>
-                                                                                            {{ $op->name }}
-                                                                                        </option>
-                                                                                    @endforeach
-                                                                                </select>
-                                                                            </div>
-                                                                        </div>
                                                                         <div class="item form-group">
                                                                             <label
                                                                                 class="col-form-label col-md-3 col-sm-3 label-align">Khoảng

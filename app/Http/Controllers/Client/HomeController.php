@@ -62,13 +62,21 @@ class HomeController extends Controller
 
     public function cancel(Request $request, Booking $booking)
     {
-        if (Auth::check()) {
-            if ($booking->user_id !== Auth::id()) {
-                abort(403);
+        if ($booking->user_id) {
+            if (!Auth::check() || $booking->user_id !== Auth::id()) {
+                abort(403, 'Bạn không có quyền hủy vé này');
             }
         } else {
             $email = $request->input('email');
             $phone = $request->input('phone');
+
+            if (!$email || !$phone) {
+                $passenger = $booking->passengers()->first();
+                if ($passenger) {
+                    $email = $passenger->passenger_email;
+                    $phone = $passenger->passenger_phone;
+                }
+            }
 
             $exists = $booking->passengers()
                 ->where('passenger_email', $email)
@@ -76,32 +84,34 @@ class HomeController extends Controller
                 ->exists();
 
             if (!$exists) {
-                return response()->json([
-                    'message' => 'Bạn không có quyền hủy vé này'
-                ], 403);
+                return response()->json(['message' => 'Bạn không có quyền hủy vé này'], 403);
             }
         }
 
+
+        if ($booking->paymentMethod && $booking->paymentMethod->type !== 'cod') {
+            return response()->json(['message' => 'Chỉ COD mới được hủy vé'], 403);
+        }
+
         if (!$booking->canCancel()) {
-            return response()->json([
-                'message' => 'Vé này không thể hủy'
-            ], 400);
+            return response()->json(['message' => 'Vé này không thể hủy'], 400);
         }
 
         DB::transaction(function () use ($booking) {
-            $booking->update(['status' => 'cancelled']);
+            $booking->update([
+                'status' => 'cancelled',
+                'paid' => false
+            ]);
 
-            $booking->tickets()->update(['status' => 'cancelled']);
             $booking->passengers()->update(['status' => 'cancelled']);
 
-            $booking->schedule->increment(
-                'seats_available',
-                $booking->num_passengers
-            );
+            $booking->tickets()->update(['status' => 'cancelled']);
+
+            $booking->payment->update(['status' => 'cancelled']);
+
+            $booking->schedule->increment('seats_available', $booking->num_passengers);
         });
 
-        return response()->json([
-            'message' => 'Hủy vé thành công'
-        ]);
+        return response()->json(['message' => 'Hủy vé thành công']);
     }
 }

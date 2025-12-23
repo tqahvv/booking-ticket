@@ -34,10 +34,10 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr role="row">
-                                                    <th>Tên loại xe</th>
-                                                    <th>Số ghế</th>
-                                                    <th>Số tầng</th>
-                                                    <th>Mô tả</th>
+                                                    <th class="text-center align-middle">Tên loại xe</th>
+                                                    <th class="text-center align-middle">Số ghế</th>
+                                                    <th class="text-center align-middle">Số tầng</th>
+                                                    <th class="text-center align-middle">Mô tả</th>
                                                     <th></th>
                                                     <th></th>
                                                 </tr>
@@ -45,21 +45,22 @@
                                             <tbody>
                                                 @foreach ($vehicleTypes as $vt)
                                                     <tr id="vehicleType-row-{{ $vt->id }}">
-                                                        <td>{{ $vt->name }}</td>
-                                                        <td>{{ $vt->capacity_total }}</td>
-                                                        <td>{{ $vt->number_of_floors }}</td>
-                                                        <td>{{ $vt->description }}</td>
-                                                        <td>
-                                                            <a class="btn btn-app btn-update-vehicleType"
-                                                                data-toggle="modal"
-                                                                data-target="#modalUpdate-{{ $vt->id }}"><i
-                                                                    class="fa fa-edit"></i>Chỉnh sửa</a>
+                                                        <td class="text-center align-middle">{{ $vt->name }}</td>
+                                                        <td class="text-center align-middle">{{ $vt->capacity_total }}</td>
+                                                        <td class="text-center align-middle">{{ $vt->number_of_floors }}
                                                         </td>
-                                                        <td>
-                                                            <a class="btn btn-app btn-delete-vehicleType"
+                                                        <td class="text-center align-middle">{{ $vt->description }}</td>
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm btn-update-vehicleType"
+                                                                data-toggle="modal"
+                                                                data-target="#modalUpdate-{{ $vt->id }}"
+                                                                style="color: #fff"><i class="fa fa-edit"></i>Chỉnh sửa</a>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-vehicleType"
                                                                 data-id="{{ $vt->id }}"
-                                                                data-delete-url="{{ route('admin.vehicleTypes.delete', $vt->id) }}"><i
-                                                                    class="fa fa-trash"></i> Xóa</a>
+                                                                data-delete-url="{{ route('admin.vehicleTypes.delete', $vt->id) }}"
+                                                                style="color: #fff"><i class="fa fa-trash"></i> Xóa</a>
                                                         </td>
                                                     </tr>
 

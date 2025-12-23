@@ -46,20 +46,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Hãng vận hành --}}
-                                <div class="item form-group">
-                                    <label class="col-form-label col-md-3 col-sm-3 label-align">Hãng vận hành <span
-                                            class="required">*</span></label>
-                                    <div class="col-md-6 col-sm-6">
-                                        <select name="operator_id" class="form-control" required>
-                                            <option value="">Chọn hãng</option>
-                                            @foreach ($operators as $op)
-                                                <option value="{{ $op->id }}">{{ $op->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
                                 {{-- Loại xe --}}
                                 <div class="item form-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Loại xe <span

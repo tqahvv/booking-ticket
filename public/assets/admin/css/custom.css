@@ -37,14 +37,6 @@
     pointer-events: none !important;
 }
 
-.btn-update-category, .btn-update-product{
-    color: green !important;
-}
-
-.btn-delete-category, .btn-delete-product{
-    color: red !important;
-}
-
 .category-image {
     display: none;
 }
@@ -162,6 +154,54 @@
     opacity: 0.7;
 }
 
+.dashboard-cards {
+    margin-bottom: 20px;
+}
+
+.dashboard-card {
+    position: relative;
+    padding: 20px;
+    border-radius: 12px;
+    color: #fff;
+    min-height: 120px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.dashboard-card .card-icon {
+    position: absolute;
+    right: 15px;
+    top: 20px;
+    font-size: 60px;
+    opacity: 0.2;
+}
+
+.dashboard-card .card-content {
+    position: relative;
+    z-index: 2;
+}
+
+.dashboard-card .card-title {
+    font-size: 14px;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.dashboard-card h2 {
+    margin: 10px 0 0;
+    font-weight: bold;
+}
+
+/* Màu sắc */
+.bg-primary { background: linear-gradient(135deg, #3498db, #2980b9); }
+.bg-info    { background: linear-gradient(135deg, #17a2b8, #138496); }
+.bg-success { background: linear-gradient(135deg, #28a745, #218838); }
+.bg-warning { background: linear-gradient(135deg, #f39c12, #d68910); }
 
 /* .btn-toggle-status {
     width: 90px;

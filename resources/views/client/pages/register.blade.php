@@ -19,23 +19,21 @@
                         required>
                     <div class="text-danger small mt-1 error-name"></div>
                 </div>
+
                 <div class="mb-3 position-relative">
                     <span class="input-icon"><i class="bi bi-envelope"></i></span>
                     <input type="email" autocomplete="off" class="form-control" name="email" placeholder="Email"
                         required>
                     <div class="text-danger small mt-1 error-email"></div>
                 </div>
+
                 <div class="mb-3 position-relative">
                     <span class="input-icon"><i class="bi bi-telephone"></i></span>
                     <input type="text" autocomplete="off" class="form-control" name="phone" placeholder="Số điện thoại"
                         required>
                     <div class="text-danger small mt-1 error-phone"></div>
                 </div>
-                <div class="mb-3 position-relative">
-                    <span class="input-icon"><i class="bi bi-geo-alt"></i></span>
-                    <input type="text" autocomplete="off"class="form-control" name="address" placeholder="Địa chỉ">
-                    <div class="text-danger small mt-1 error-address"></div>
-                </div>
+
                 <div class="mb-3 position-relative">
                     <span class="input-icon"><i class="bi bi-lock"></i></span>
                     <input type="password" autocomplete="off" class="form-control" name="password"
@@ -49,7 +47,7 @@
                     <div class="text-danger small mt-1 error-password_confirmation"></div>
                 </div>
 
-                <button type="submit" class="btn btn-danger w-100 mb-3">Tiếp tục</button>
+                <button type="submit" class="btn btn-danger w-100 mb-3">Đăng ký</button>
 
                 <div class="d-flex align-items-center my-3">
                     <hr class="flex-grow-1">
@@ -60,6 +58,7 @@
                 <button type="button" class="btn btn-primary w-100 mb-2">
                     <i class="bi bi-facebook me-2"></i> Tiếp tục với Facebook
                 </button>
+
                 <button type="button" class="btn btn-light border w-100 mb-3">
                     <i class="bi bi-google me-2"></i> Tiếp tục với Google
                 </button>
@@ -74,7 +73,7 @@
                     Đã là thành viên? <a href="" class="fw-bold">Đăng nhập</a>
                 </p>
                 <p class="text-center mt-1">
-                    <a href="#" class="fw-bold">Đăng nhập với tư cách là khách!</a>
+                    <a href="{{ route('home') }}" class="fw-bold">Đăng nhập với tư cách là khách!</a>
                 </p>
             </form>
         </div>

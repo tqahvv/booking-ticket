@@ -22,16 +22,16 @@ class LocationAdminController extends Controller
     public function add(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'city'     => 'required|string|max:255',
-            'address'  => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
             'province' => 'required|string|max:255',
         ]);
 
         $location = Location::create([
-            'name'     => $request->name,
-            'city'     => $request->city,
-            'address'  => $request->address,
+            'name' => $request->name,
+            'city' => $request->city,
+            'address' => $request->address,
             'province' => $request->province,
         ]);
 
@@ -45,18 +45,18 @@ class LocationAdminController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'city'     => 'required|string|max:255',
-            'address'  => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
             'province' => 'required|string|max:255',
         ]);
 
         $location = Location::findOrFail($id);
 
         $location->update([
-            'name'     => $request->name,
-            'city'     => $request->city,
-            'address'  => $request->address,
+            'name' => $request->name,
+            'city' => $request->city,
+            'address' => $request->address,
             'province' => $request->province,
         ]);
 

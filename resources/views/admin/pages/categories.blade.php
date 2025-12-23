@@ -37,9 +37,9 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr>
-                                                    <th>Tên danh mục</th>
-                                                    <th>Slug</th>
-                                                    <th>Mô tả</th>
+                                                    <th class="text-center align-middle">Tên danh mục</th>
+                                                    <th class="text-center align-middle">Slug</th>
+                                                    <th class="text-center align-middle">Mô tả</th>
                                                     <th></th>
                                                     <th></th>
                                                 </tr>
@@ -48,21 +48,24 @@
                                             <tbody>
                                                 @foreach ($categories as $cat)
                                                     <tr id="category-row-{{ $cat->id }}">
-                                                        <td>{{ $cat->name }}</td>
-                                                        <td>{{ $cat->slug }}</td>
-                                                        <td>{{ $cat->description }}</td>
+                                                        <td class="text-center align-middle">{{ $cat->name }}</td>
+                                                        <td class="text-center align-middle">{{ $cat->slug }}</td>
+                                                        <td class="text-center align-middle">{{ $cat->description }}</td>
 
-                                                        <td style="display: flex; justify-content: center">
-                                                            <a class="btn btn-app btn-update-category" data-toggle="modal"
-                                                                data-target="#modalUpdate-{{ $cat->id }}">
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm btn-update-category"
+                                                                data-toggle="modal"
+                                                                data-target="#modalUpdate-{{ $cat->id }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-edit"></i>Chỉnh sửa
                                                             </a>
                                                         </td>
 
-                                                        <td style="display: flex; justify-content: center">
-                                                            <a class="btn btn-app btn-delete-category"
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-category"
                                                                 data-id="{{ $cat->id }}"
-                                                                data-url="{{ route('admin.categories.delete', $cat->id) }}">
+                                                                data-url="{{ route('admin.categories.delete', $cat->id) }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-trash"></i> Xóa
                                                             </a>
                                                         </td>

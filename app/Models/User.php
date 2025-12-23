@@ -20,6 +20,9 @@ class User extends Authenticatable
         'birthday',
         'gender',
         'role_id',
+        'activation_token',
+        'google_id',
+        'operator_id',
     ];
 
     public function role()
@@ -32,16 +35,28 @@ class User extends Authenticatable
         return $this->hasMany(Review::class);
     }
 
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
     public function isActive()
     {
         return $this->status === 'active';
     }
+
     public function isBanned()
     {
         return $this->status === 'banned';
     }
+
     public function isDeleted()
     {
         return $this->status === 'deleted';
+    }
+
+    public function operator()
+    {
+        return $this->belongsTo(Operator::class);
     }
 }

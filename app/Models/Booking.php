@@ -14,6 +14,7 @@ class Booking extends Model
         'user_id',
         'schedule_id',
         'payment_method_id',
+        'paid',
         'promotion_id',
         'booking_date',
         'total_price',
@@ -97,4 +98,18 @@ class Booking extends Model
 
         return true;
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
+
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latestOfMany();
+    }
+
+    protected $casts = [
+        'paid' => 'boolean',
+    ];
 }

@@ -51,4 +51,19 @@
             </form>
         </div>
     </div>
+
+    @if (request()->get('activated'))
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                if (typeof Swal !== "undefined") {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Kích hoạt thành công",
+                        text: "Bạn có thể đăng nhập ngay bây giờ",
+                    });
+                }
+            });
+        </script>
+    @endif
+
 @endsection

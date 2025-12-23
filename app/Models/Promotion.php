@@ -26,4 +26,10 @@ class Promotion extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    protected $casts = [
+        'valid_from' => 'datetime',
+        'valid_to' => 'datetime',
+        'is_active' => 'boolean',
+    ];
 }

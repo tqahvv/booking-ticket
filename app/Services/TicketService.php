@@ -19,7 +19,6 @@ class TicketService
                 'seat_number'  => $p->seat_number,
                 'status' => 'unused',
                 'qr_code_data' => 'BOOKING:' . $booking->code . ';SEAT:' . $p->seat_number,
-                'e_ticket_url' => null,
             ]);
         }
     }

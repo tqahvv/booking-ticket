@@ -35,36 +35,35 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr role="row">
-                                                    <th style="width: 10%;">Hình ảnh</th>
-                                                    <th style="width: 20%;">Tiêu đề</th>
-                                                    <th style="width: 39%;">Nội dung</th>
-                                                    <th style="width: 11%;">Tác giả</th>
-                                                    <th style="width: 9%;">Ngày đăng</th>
-                                                    <th style="width: 7%;">Trạng thái</th>
-                                                    <th style="width: 3%;"></th>
-                                                    <th style="width: 3%;"></th>
+                                                    <th style="width: 10%;" class="text-center align-middle">Hình ảnh</th>
+                                                    <th style="width: 20%;" class="text-center align-middle">Tiêu đề</th>
+                                                    <th style="width: 39%;" class="text-center align-middle">Nội dung</th>
+                                                    <th style="width: 11%;" class="text-center align-middle">Tác giả</th>
+                                                    <th style="width: 9%;" class="text-center align-middle">Ngày đăng</th>
+                                                    <th style="width: 7%;" class="text-center align-middle">Trạng thái</th>
+                                                    <th style="width: 3%;" class="text-center align-middle"></th>
+                                                    <th style="width: 3%;" class="text-center align-middle"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach ($posts as $post)
                                                     <tr id="post-row-{{ $post->id }}">
-                                                        <td>
+                                                        <td class="text-center align-middle">
                                                             <img src="{{ $post->image_url }}" alt="{{ $post->title }}"
                                                                 class="" style="width: 100px; height: 100px;">
                                                         </td>
-                                                        <td>{{ strip_tags($post->title) }}</td>
-                                                        <td>{{ Str::limit(strip_tags($post->content), 300) }}</td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
+                                                        <td class="text-center align-middle">{{ strip_tags($post->title) }}
+                                                        </td>
+                                                        <td class="text-center align-middle">
+                                                            {{ Str::limit(strip_tags($post->content), 300) }}</td>
+                                                        <td class="text-center align-middle">
                                                             {{ $post->author->name }}
                                                         </td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
+                                                        <td class="text-center align-middle">
                                                             {{ $post->published_at->format('d-m-Y') }}
 
                                                         </td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
+                                                        <td class="text-center align-middle">
                                                             <button
                                                                 class="btn btn-sm btn-toggle-status 
                                                                 {{ $post->status === 'published' ? 'btn-success' : 'btn-secondary' }}"
@@ -72,17 +71,17 @@
                                                                 {{ $post->status }}
                                                             </button>
                                                         </td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
-                                                            <a class="btn btn-app btn-update-post" data-toggle="modal"
-                                                                data-target="#modalUpdate-{{ $post->id }}">
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm btn-update-post"
+                                                                data-toggle="modal"
+                                                                data-target="#modalUpdate-{{ $post->id }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-edit"></i>Chỉnh sửa
                                                             </a>
                                                         </td>
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
-                                                            <a class="btn btn-app btn-delete-post"
-                                                                data-id="{{ $post->id }}">
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-post"
+                                                                data-id="{{ $post->id }}" style="color: #fff">
                                                                 <i class="fa fa-trash"></i>Xóa
                                                             </a>
                                                         </td>
@@ -132,7 +131,8 @@
                                                                         <div class="item form-group">
                                                                             <label
                                                                                 class="col-form-label col-md-3 col-sm-3 label-align">Nội
-                                                                                dung <span class="required">*</span></label>
+                                                                                dung <span
+                                                                                    class="required">*</span></label>
                                                                             <div class="col-md-6 col-sm-6">
                                                                                 @php
                                                                                     $content = $post->content;

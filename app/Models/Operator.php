@@ -36,4 +36,9 @@ class Operator extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

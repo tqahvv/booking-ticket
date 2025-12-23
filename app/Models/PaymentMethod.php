@@ -11,6 +11,7 @@ class PaymentMethod extends Model
 
     protected $fillable = [
         'name',
+        'type',
         'description',
         'details',
         'image',
@@ -35,5 +36,10 @@ class PaymentMethod extends Model
         }
 
         return asset($path);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

@@ -39,6 +39,9 @@
             'admin.locations.index',
             'admin.vehicleTypes.index',
             'admin.categories.index',
+            'admin.tickets.index',
+            'admin.payments.index',
+            'admin.promotions.index',
         ];
     @endphp
 

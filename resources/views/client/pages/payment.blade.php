@@ -1,8 +1,6 @@
 @extends('layouts.client')
 
-
 @section('title', 'Thanh toán')
-
 
 @section('content')
     <div class="container my-4">
@@ -153,3 +151,8 @@
         </div>
     </div>
 @endsection
+
+{{-- 	9704198526191432198
+        NGUYEN VAN A
+        07/15
+--}}

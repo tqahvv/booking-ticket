@@ -10,7 +10,7 @@ class VehicleTypeAdminController extends Controller
 {
     public function index()
     {
-        $vehicleTypes = VehicleType::all();
+        $vehicleTypes = VehicleType::orderBy('created_at', 'DESC')->get();
         return view('admin.pages.vehicle_types', compact('vehicleTypes'));
     }
 

@@ -36,14 +36,14 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr role="row">
-                                                    <th>Tuyến</th>
-                                                    <th>Nhà xe</th>
-                                                    <th>Loại xe</th>
-                                                    <th>Giờ xuất bến</th>
-                                                    <th>Thời gian chạy (phút)</th>
-                                                    <th>Ngày chạy</th>
-                                                    <th>Giá vé</th>
-                                                    <th>Số ghế</th>
+                                                    <th class="text-center align-middle">Tuyến</th>
+                                                    <th class="text-center align-middle">Nhà xe</th>
+                                                    <th class="text-center align-middle">Loại xe</th>
+                                                    <th class="text-center align-middle">Giờ xuất bến</th>
+                                                    <th class="text-center align-middle">Thời gian chạy (phút)</th>
+                                                    <th class="text-center align-middle">Ngày chạy</th>
+                                                    <th class="text-center align-middle">Giá vé</th>
+                                                    <th class="text-center align-middle">Số ghế</th>
                                                     <th></th>
                                                     <th></th>
                                                 </tr>
@@ -51,28 +51,32 @@
                                             <tbody>
                                                 @foreach ($templates as $t)
                                                     <tr id="template-row-{{ $t->id }}">
-                                                        <td>{{ $t->route->description }}</td>
-                                                        <td>{{ $t->operator->name }}</td>
-                                                        <td>{{ $t->vehicleType->name }}</td>
-                                                        <td>{{ $t->departure_time }}</td>
-                                                        <td>{{ $t->travel_duration_minutes }}</td>
-                                                        <td>{{ implode(',', $t->running_days ?? []) }}</td>
-                                                        <td>{{ number_format($t->base_fare, 0, ',', '.') }} VNĐ</td>
-                                                        <td>{{ $t->default_seats }}</td>
+                                                        <td class="text-center align-middle">{{ $t->route->description }}
+                                                        </td>
+                                                        <td class="text-center align-middle">{{ $t->operator->name }}</td>
+                                                        <td class="text-center align-middle">{{ $t->vehicleType->name }}
+                                                        </td>
+                                                        <td class="text-center align-middle">{{ $t->departure_time }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $t->travel_duration_minutes }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ implode(',', $t->running_days ?? []) }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ number_format($t->base_fare, 0, ',', '.') }} VNĐ</td>
+                                                        <td class="text-center align-middle">{{ $t->default_seats }}</td>
 
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
-                                                            <a class="btn btn-app btn-update-schedule-template"
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm btn-update-schedule-template"
                                                                 data-toggle="modal"
-                                                                data-target="#modalUpdate-{{ $t->id }}"><i
-                                                                    class="fa fa-edit"></i>Chỉnh sửa</a>
+                                                                data-target="#modalUpdate-{{ $t->id }}"
+                                                                style="color: #fff"><i class="fa fa-edit"></i>Chỉnh sửa</a>
                                                         </td>
 
-                                                        <td
-                                                            style="display: flex; justify-content: center; align-content: center">
-                                                            <a class="btn btn-app btn-delete-schedule-template"
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-schedule-template"
                                                                 data-id="{{ $t->id }}"
-                                                                data-delete-url="{{ route('admin.scheduleTemplates.delete', $t->id) }}">
+                                                                data-delete-url="{{ route('admin.scheduleTemplates.delete', $t->id) }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-trash"></i> Xóa
                                                             </a>
                                                         </td>
@@ -103,7 +107,7 @@
                                                                                 <label>Giờ xuất bến</label>
                                                                                 <input type="time" name="departure_time"
                                                                                     class="form-control"
-                                                                                    value="{{ $t->departure_time }}"
+                                                                                    value="{{ \Carbon\Carbon::parse($t->departure_time)->format('H:i') }}"
                                                                                     required>
                                                                             </div>
                                                                             <div class="form-group">
@@ -169,7 +173,8 @@
 
                                                                         </div>
                                                                         <div class="modal-footer">
-                                                                            <button type="button" class="btn btn-secondary"
+                                                                            <button type="button"
+                                                                                class="btn btn-secondary"
                                                                                 data-dismiss="modal">Đóng</button>
                                                                             <button type="submit"
                                                                                 class="btn btn-primary">Lưu</button>

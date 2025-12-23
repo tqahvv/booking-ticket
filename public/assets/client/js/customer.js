@@ -4,32 +4,163 @@ $(document).ready(function () {
     // ================================
     $("#registerForm").on("submit", function (e) {
         e.preventDefault();
+
+        Swal.fire({
+            title: "Đang xử lý...",
+            text: "Hệ thống đang gửi email kích hoạt",
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading(),
+        });
+
         $.ajax({
             url: "/register",
             method: "POST",
             data: $(this).serialize(),
-            success: function (res) {
-                Swal.fire({
-                    icon: "success",
-                    title: "Đăng ký thành công",
-                    text: "Bạn có thể đăng nhập ngay bây giờ!",
-                }).then(() => (window.location.href = "/login"));
+
+            success: function () {
+                Swal.close();
+
+                const email = $('input[name="email"]').val();
+                const expiresAt = Date.now() + 15 * 60 * 1000;
+
+                localStorage.setItem(
+                    "pending_activation",
+                    JSON.stringify({
+                        email: email,
+                        expires_at: expiresAt,
+                    })
+                );
+
+                showActivationSwal(email, expiresAt);
             },
+
             error: function (xhr) {
+                Swal.close();
                 $(".text-danger").text("");
-                if (xhr.status === 422 && xhr.responseJSON.errors) {
+
+                if (xhr.status === 422) {
                     $.each(xhr.responseJSON.errors, function (key, value) {
                         $(".error-" + key).text(value[0]);
                     });
+                } else if (xhr.status === 409) {
+                    Swal.fire("Thông báo", xhr.responseJSON.message, "warning");
                 } else {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Lỗi hệ thống",
-                        text: "Có lỗi xảy ra, vui lòng thử lại sau!",
-                    });
+                    Swal.fire(
+                        "Lỗi",
+                        "Có lỗi xảy ra, vui lòng thử lại",
+                        "error"
+                    );
                 }
             },
         });
+    });
+
+    function showActivationSwal(email, expiresAt) {
+        let timerInterval;
+        let activationChecker;
+
+        Swal.fire({
+            title: "Xác nhận email",
+            html: `
+                <p>Chúng tôi đã gửi email kích hoạt.</p>
+                <p>Vui lòng kiểm tra hộp thư.</p>
+                <b id="countdown"></b>
+            `,
+            icon: "info",
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: "Đóng",
+            timer: expiresAt - Date.now(),
+
+            didOpen: () => {
+                const countdown =
+                    Swal.getHtmlContainer().querySelector("#countdown");
+
+                timerInterval = setInterval(() => {
+                    const timeLeft = Swal.getTimerLeft();
+                    if (!timeLeft || timeLeft <= 0) return;
+
+                    const minutes = Math.floor(timeLeft / 60000);
+                    const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+                    countdown.textContent = `⏳ Thời gian còn lại: ${minutes}:${seconds
+                        .toString()
+                        .padStart(2, "0")}`;
+                }, 1000);
+
+                activationChecker = setInterval(() => {
+                    $.get("/check-activation", { email }, function (res) {
+                        if (res.active) {
+                            clearInterval(timerInterval);
+                            clearInterval(activationChecker);
+                            localStorage.removeItem("pending_activation");
+                            Swal.close();
+                            window.location.href = "/login?activated=1";
+                        }
+                    });
+                }, 5000);
+            },
+
+            willClose: () => {
+                clearInterval(timerInterval);
+                clearInterval(activationChecker);
+            },
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.timer) {
+                localStorage.removeItem("pending_activation");
+
+                Swal.fire({
+                    icon: "warning",
+                    title: "Hết thời gian kích hoạt",
+                    text: "Vui lòng gửi lại email kích hoạt",
+                    showCancelButton: true,
+                    confirmButtonText: "Gửi lại email",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        resendActivation(email);
+                    }
+                });
+            }
+        });
+    }
+
+    function resendActivation(email) {
+        $.post("/resend-activation", {
+            email: email,
+            _token: $('meta[name="csrf-token"]').attr("content"),
+        }).done(() => {
+            const newExpires = Date.now() + 15 * 60 * 1000;
+
+            localStorage.setItem(
+                "pending_activation",
+                JSON.stringify({
+                    email: email,
+                    expires_at: newExpires,
+                })
+            );
+
+            Swal.fire(
+                "Đã gửi",
+                "Email kích hoạt đã được gửi lại",
+                "success"
+            ).then(() => {
+                showActivationSwal(email, newExpires);
+            });
+        });
+    }
+
+    $(document).ready(function () {
+        const pending = localStorage.getItem("pending_activation");
+        if (!pending) return;
+
+        const data = JSON.parse(pending);
+
+        if (Date.now() < data.expires_at) {
+            showActivationSwal(data.email, data.expires_at);
+        } else {
+            localStorage.removeItem("pending_activation");
+        }
     });
 
     $("#loginForm").on("submit", function (e) {

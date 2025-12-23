@@ -57,19 +57,6 @@
                                 </div>
 
                                 <div class="item form-group">
-                                    <label class="col-form-label col-md-3 col-sm-3 label-align">Nhà xe <span
-                                            class="required">*</span></label>
-                                    <div class="col-md-6 col-sm-6">
-                                        <select name="operator_id" class="form-control" required>
-                                            <option value="">-- Chọn nhà xe --</option>
-                                            @foreach ($operators as $op)
-                                                <option value="{{ $op->id }}">{{ $op->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="item form-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Khoảng cách (km) <span
                                             class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6">

@@ -60,9 +60,8 @@
             <nav id="nav-menu-container">
                 <ul class="nav-menu">
                     <li><a href="/">Trang chủ</a></li>
-                    <li><a href="">Giới thiệu</a></li>
+                    <li><a href="/about">Giới thiệu</a></li>
                     <li><a href="{{ route('post.index') }}">Bài viết</a></li>
-                    <li><a href="">Chuyến đi</a></li>
                     <li><a href="{{ route('contact.index') }}">Liên hệ</a></li>
                 </ul>
             </nav>

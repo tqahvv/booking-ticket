@@ -44,6 +44,11 @@
                 {{-- <a href="" class="btn btn-primary">In vé
                     / Tải PDF</a> --}}
             </div>
+            <p>
+                📧 Thông tin vé đã được gửi tới:
+                <strong>{{ $booking->passengers->first()->passenger_email ?? '—' }}</strong>
+            </p>
+
         </div>
     </div>
 @endsection

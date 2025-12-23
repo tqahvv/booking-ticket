@@ -12,19 +12,8 @@ class VehicleType extends Model
     protected $fillable = [
         'name',
         'capacity_total',
-        'number_of_rows',
-        'layout_schema',
+        'number_of_floors',
+        'seat_template_type',
         'description',
     ];
-
-    protected $casts = [
-        'layout_schema' => 'array',
-    ];
-
-    public function amenities()
-    {
-        return $this->belongsToMany(Amenity::class, 'vehicle_type_amenities')
-            ->withPivot('extra_cost')
-            ->withTimestamps();
-    }
 }

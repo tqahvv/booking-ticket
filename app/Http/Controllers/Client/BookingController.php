@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Mail\BookingConfirmedMail;
 use App\Models\BankTransfer;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
+use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Promotion;
 use App\Models\Schedule;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use App\Services\TicketService;
+use Illuminate\Support\Facades\Mail;
 
 class BookingController extends Controller
 {
@@ -65,7 +68,7 @@ class BookingController extends Controller
                 ->whereDate('booking_date', $bookingDate);
         })->count();
 
-        $seatsAvailable = $schedule->total_seats - $bookedSeatsCount;
+        $seatsAvailable = $schedule->seats_available;
 
         $seatsNeeded = $request->seats;
 
@@ -109,7 +112,7 @@ class BookingController extends Controller
                 ->where('status', 'confirmed');
         })->pluck('seat_number')->toArray();
 
-        $seatsAvailable = $schedule->total_seats - count($bookedSeats);
+        $seatsAvailable = $schedule->seats_available;
 
         $seats = VehicleSeatTemplate::where('vehicle_type_id', $schedule->vehicle_type_id)
             ->orderBy('deck')
@@ -362,8 +365,8 @@ class BookingController extends Controller
             'payment_method_id' => 'required|exists:payment_methods,id',
         ]);
 
-        $booking = Booking::with(['passengers'])->findOrFail($request->booking_id);
-        $method = PaymentMethod::findOrFail($request->payment_method_id);
+        $booking = Booking::with('passengers')->findOrFail($request->booking_id);
+        $method  = PaymentMethod::findOrFail($request->payment_method_id);
 
         if ($booking->expires_at && now()->greaterThan($booking->expires_at)) {
             return redirect()->route('home')
@@ -375,12 +378,18 @@ class BookingController extends Controller
             case 'cod':
                 DB::beginTransaction();
                 try {
-                    $schedule = Schedule::lockForUpdate()->findOrFail($booking->schedule_id);
-                    $bookingDate = Carbon::parse($schedule->departure_datetime)->format('Y-m-d');
+                    $payment = Payment::create([
+                        'booking_id' => $booking->id,
+                        'payment_method_id' => $method->id,
+                        'amount' => $booking->final_price,
+                        'currency' => $booking->currency,
+                        'status' => 'pending',
+                    ]);
 
-                    $bookedSeatsCount = BookingPassenger::whereHas('booking', function ($q) use ($schedule, $bookingDate) {
+                    $schedule = Schedule::lockForUpdate()->findOrFail($booking->schedule_id);
+
+                    $bookedSeatsCount = BookingPassenger::whereHas('booking', function ($q) use ($schedule) {
                         $q->where('schedule_id', $schedule->id)
-                            ->whereDate('booking_date', $bookingDate)
                             ->where('status', 'confirmed');
                     })->count();
 
@@ -388,142 +397,121 @@ class BookingController extends Controller
 
                     if ($availableSeats < $booking->num_passengers) {
                         DB::rollBack();
-                        return back()->withErrors(['error' => 'Không còn đủ chỗ trên chuyến này. Vui lòng chọn chuyến khác.']);
+                        return back()->withErrors(['error' => 'Không còn đủ chỗ trên chuyến này.']);
                     }
 
-                    $booking->payment_method_id = $method->id;
-                    $booking->status = 'confirmed';
-                    $booking->paid = false;
-                    $booking->save();
+                    $booking->update([
+                        'payment_method_id' => $method->id,
+                        'status' => 'confirmed',
+                        'paid' => false,
+                    ]);
+
+                    $booking->passengers()->update([
+                        'status' => 'confirmed'
+                    ]);
+
+                    $payment->update([
+                        'status' => 'pending',
+                        'paid_at' => now(),
+                    ]);
 
                     $this->tickets->generateTickets($booking);
-
                     $schedule->decrement('seats_available', $booking->num_passengers);
-
-                    Log::info("Booking {$booking->id} confirmed as COD, seats reduced: {$booking->num_passengers}");
 
                     DB::commit();
 
-                    return redirect()->route('booking.completed', ['booking_id' => $booking->id]);
+                    $emailList = $booking->passengers
+                        ->pluck('passenger_email')
+                        ->filter()
+                        ->unique()
+                        ->toArray();
+
+                    if (empty($emailList) && $booking->user) {
+                        $emailList = [$booking->user->email];
+                    }
+
+                    Mail::to($emailList)->send(
+                        new BookingConfirmedMail(
+                            $booking->load([
+                                'passengers',
+                                'tickets',
+                                'schedule.route.origin',
+                                'schedule.route.destination'
+                            ])
+                        )
+                    );
+
+                    return redirect()->route('booking.completed', [
+                        'booking_id' => $booking->id
+                    ]);
                 } catch (\Throwable $e) {
                     DB::rollBack();
                     Log::error('COD confirm error: ' . $e->getMessage());
-                    return back()->withErrors(['error' => 'Xác nhận thất bại. Vui lòng thử lại.']);
+                    return back()->withErrors(['error' => 'Xác nhận thất bại.']);
                 }
-
-            case 'bank_transfer':
-                $booking->payment_method_id = $method->id;
-                $booking->status = 'waiting_transfer';
-                $booking->paid = false;
-                $booking->save();
-
-                return redirect()->route('booking.bank-transfer', ['booking_id' => $booking->id]);
-
             case 'vnpay':
-                return $this->startVnpayPayment($booking);
+
+                $payment = Payment::create([
+                    'booking_id'        => $booking->id,
+                    'payment_method_id' => $method->id,
+                    'amount'            => $booking->final_price,
+                    'currency'          => $booking->currency,
+                    'status'            => 'pending',
+                ]);
+
+                return $this->startVnpayPayment($booking, $payment);
 
             default:
                 abort(400, 'Phương thức thanh toán không hợp lệ.');
         }
     }
 
-    public function showBankTransfer(Request $request)
+    public function startVnpayPayment(Booking $booking, Payment $payment)
     {
-        $booking = Booking::with(['passengers', 'schedule'])->findOrFail($request->booking_id);
-
-        $transfer = BankTransfer::updateOrCreate(
-            ['booking_id' => $booking->id],
-            [
-                'bank_name' => 'Ngân hàng A',
-                'account_number' => '1234567890',
-                'account_name' => 'Công ty XYZ',
-                'amount' => $booking->final_price,
-                'expires_at' => Carbon::now()->addMinutes(15),
-            ]
-        );
-
-        return view('client.pages.bank-transfer', compact('booking', 'transfer'));
-    }
-
-    public function confirmBankTransfer(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-            $booking = Booking::with('passengers')->findOrFail($request->booking_id);
-            $transfer = BankTransfer::where('booking_id', $booking->id)->firstOrFail();
-
-            $transfer->status = 'confirmed';
-            $transfer->save();
-
-            $booking->status = 'confirmed';
-            $booking->paid = true;
-            $booking->save();
-
-            foreach ($booking->passengers as $passenger) {
-                $passenger->status = 'confirmed';
-                $passenger->save();
-            }
-
-            $this->tickets->generateTickets($booking);
-
-            DB::commit();
-
-            return redirect()->route('booking.completed', ['booking_id' => $booking->id])
-                ->with('success', 'Thanh toán chuyển khoản đã được xác nhận và vé đã được phát hành.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Bank transfer confirm error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Xác nhận thất bại. Vui lòng thử lại.']);
-        }
-    }
-
-    public function startVnpayPayment($booking)
-    {
-        $vnp_Url = config('vnpay.vnp_Url');
-        $vnp_ReturnUrl = config('vnpay.vnp_ReturnUrl');
-        $vnp_TmnCode = config('vnpay.vnp_TmnCode');
+        $vnp_Url        = config('vnpay.vnp_Url');
+        $vnp_ReturnUrl  = config('vnpay.vnp_ReturnUrl');
+        $vnp_TmnCode    = config('vnpay.vnp_TmnCode');
         $vnp_HashSecret = config('vnpay.vnp_HashSecret');
+        $txnRef = 'PAY-' . $payment->id;
+
+        $payment->update([
+            'transaction_code' => $txnRef
+        ]);
 
         $inputData = [
-            "vnp_Version" => "2.1.0",
-            "vnp_TmnCode" => $vnp_TmnCode,
-            "vnp_Amount" => $booking->final_price * 100,
-            "vnp_Command" => "pay",
+            "vnp_Version"    => "2.1.0",
+            "vnp_TmnCode"    => $vnp_TmnCode,
+            "vnp_Amount"     => $booking->final_price * 100,
+            "vnp_Command"    => "pay",
             "vnp_CreateDate" => date('YmdHis'),
-            "vnp_CurrCode" => "VND",
-            "vnp_IpAddr" => request()->ip(),
-            "vnp_Locale" => "vn",
-            "vnp_OrderInfo" => "Thanh toan ve xe #" . $booking->code,
-            "vnp_OrderType" => "billpayment",
-            "vnp_ReturnUrl" => $vnp_ReturnUrl,
-            "vnp_TxnRef" => $booking->code,
+            "vnp_CurrCode"   => "VND",
+            "vnp_IpAddr"     => request()->ip(),
+            "vnp_Locale"     => "vn",
+            "vnp_OrderInfo"  => "Thanh toan ve xe #" . $booking->code,
+            "vnp_OrderType"  => "billpayment",
+            "vnp_ReturnUrl"  => $vnp_ReturnUrl,
+            "vnp_TxnRef"     => $txnRef,
         ];
 
         ksort($inputData);
 
-        // Build query
-        $query = "";
         $hashdata = "";
+        $query    = "";
         foreach ($inputData as $key => $value) {
-            if ($hashdata != "") {
-                $hashdata .= '&';
-            }
-            $hashdata .= urlencode($key) . "=" . urlencode($value);
-
-            $query .= urlencode($key) . "=" . urlencode($value) . '&';
+            $hashdata .= urlencode($key) . "=" . urlencode($value) . '&';
+            $query    .= urlencode($key) . "=" . urlencode($value) . '&';
         }
+
+        $hashdata = rtrim($hashdata, '&');
+        $query    = rtrim($query, '&');
 
         $vnp_Url .= "?" . $query;
+        $vnp_Url .= "&vnp_SecureHash=" . hash_hmac('sha512', $hashdata, $vnp_HashSecret);
 
-        if (isset($vnp_HashSecret)) {
-            $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-            $vnp_Url .= "vnp_SecureHash=" . $vnpSecureHash;
-        }
-
-        // Cập nhật trạng thái booking
-        $booking->payment_method_id = PaymentMethod::where('type', 'vnpay')->first()->id;
-        $booking->status = 'waiting_payment';
-        $booking->save();
+        $booking->update([
+            'payment_method_id' => $payment->payment_method_id,
+            'status'            => 'waiting_payment',
+        ]);
 
         return redirect($vnp_Url);
     }
@@ -534,48 +522,78 @@ class BookingController extends Controller
         $inputData = $request->all();
 
         $vnp_SecureHash = $inputData['vnp_SecureHash'] ?? null;
-
-        unset($inputData['vnp_SecureHash']);
-        unset($inputData['vnp_SecureHashType']);
+        unset($inputData['vnp_SecureHash'], $inputData['vnp_SecureHashType']);
 
         ksort($inputData);
 
         $hashData = "";
         foreach ($inputData as $key => $value) {
-            if ($hashData != "") {
-                $hashData .= '&';
-            }
-            $hashData .= urlencode($key) . "=" . urlencode($value);
+            $hashData .= urlencode($key) . "=" . urlencode($value) . '&';
         }
+        $hashData = rtrim($hashData, '&');
 
-        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
-
-        if ($secureHash !== $vnp_SecureHash) {
+        if (hash_hmac('sha512', $hashData, $vnp_HashSecret) !== $vnp_SecureHash) {
             return redirect()->route('booking.payment')
-                ->withErrors(['error' => 'Sai chữ ký! Dữ liệu có thể bị thay đổi.']);
+                ->withErrors(['error' => 'Sai chữ ký!']);
         }
 
-        $booking = Booking::where('code', $request->vnp_TxnRef)->first();
+        $payment = Payment::where('transaction_code', $request->vnp_TxnRef)->first();
 
-        if (!$booking) {
+        if (!$payment) {
             return redirect()->route('home')
-                ->withErrors(['error' => 'Không tìm thấy đơn đặt vé.']);
+                ->withErrors(['error' => 'Không tìm thấy giao dịch thanh toán.']);
         }
+
+        $booking = $payment->booking;
 
         if ($request->vnp_ResponseCode == "00" && $request->vnp_TransactionStatus == "00") {
 
-            DB::transaction(function () use ($booking) {
-                $booking->status = 'confirmed';
-                $booking->paid = true;
-                $booking->save();
+            DB::transaction(function () use ($booking, $payment, $request) {
+
+                $booking->update([
+                    'status' => 'confirmed',
+                    'paid'   => true,
+                ]);
+
+                $payment->update([
+                    'status'   => 'success',
+                    'paid_at' => now(),
+                    'meta'     => $request->all(),
+                ]);
 
                 $this->tickets->generateTickets($booking);
             });
+
+            $emailList = $booking->passengers
+                ->pluck('passenger_email')
+                ->filter()
+                ->unique()
+                ->toArray();
+
+            if (empty($emailList) && $booking->user) {
+                $emailList = [$booking->user->email];
+            }
+
+            Mail::to($emailList)->send(
+                new BookingConfirmedMail(
+                    $booking->load([
+                        'passengers',
+                        'tickets',
+                        'schedule.route.origin',
+                        'schedule.route.destination'
+                    ])
+                )
+            );
 
             return redirect()->route('booking.completed', [
                 'booking_id' => $booking->id
             ])->with('success', 'Thanh toán VNPAY thành công!');
         }
+
+        $payment->update([
+            'status' => 'failed',
+            'meta'   => $request->all(),
+        ]);
 
         return redirect()->route('booking.payment', [
             'booking_id' => $booking->id

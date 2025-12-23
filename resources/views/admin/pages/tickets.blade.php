@@ -35,26 +35,38 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr role="row">
-                                                    <th>Mã vé</th>
-                                                    <th>Mã đặt vé</th>
-                                                    <th>Ghế</th>
-                                                    <th>Thời gian chạy</th>
-                                                    <th>Trạng thái</th>
-                                                    <th></th>
-                                                    <th></th>
+                                                    <th class="text-center align-middle" style="width: 10%;">Mã vé</th>
+                                                    <th class="text-center align-middle" style="width: 10%;">Mã đặt vé</th>
+                                                    <th class="text-center align-middle" style="width: 10%;">Ghế</th>
+                                                    <th class="text-center align-middle" style="width: 8%;">Thời gian chạy
+                                                    </th>
+                                                    <th class="text-center align-middle" style="width: 10%;">Trạng thái</th>
+                                                    <th style="width: 10%;"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($tickets as $ticket)
+                                                @foreach ($tickets as $date => $dailyTickets)
+                                            <tbody>
+                                                <tr class="group-header">
+                                                    <td colspan="7" class="bg-info text-white text-center fw-bold">
+                                                        🚍 Ngày khởi hành:
+                                                        {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
+                                                    </td>
+                                                </tr>
+                                                @foreach ($dailyTickets as $ticket)
                                                     <tr id="ticket-row-{{ $ticket->id }}">
-                                                        <td>{{ $ticket->ticket_code }}</td>
-                                                        <td>{{ $ticket->booking->code ?? 'N/A' }}</td>
-                                                        <td>{{ $ticket->seat_number ?? '-' }}</td>
-                                                        <td>
-                                                            {{ $ticket->valid_from }} → <br>
-                                                            {{ $ticket->valid_to }}
+                                                        <td class="text-center align-middle">{{ $ticket->ticket_code }}
                                                         </td>
-                                                        <td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $ticket->booking->code ?? 'N/A' }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $ticket->seat_number ?? '-' }}</td>
+                                                        <td class="text-center align-middle">
+                                                            {{ $ticket->valid_from->format('H:i d/m/Y') }}
+                                                            →
+                                                            {{ $ticket->valid_to->format('H:i d/m/Y') }}
+                                                        </td class="text-center align-middle">
+                                                        <td class="text-center align-middle">
                                                             @php
                                                                 $statusText = [
                                                                     'unused' => 'Chưa sử dụng',
@@ -65,7 +77,7 @@
                                                             @endphp
 
                                                             <select class="form-control ticket-status"
-                                                                data-id="{{ $ticket->id }}" @disabled(in_array($ticket->status, ['used', 'expired']))>
+                                                                data-id="{{ $ticket->id }}" @disabled(in_array($ticket->status, ['used', 'expired', 'cancelled']))>
 
                                                                 @foreach ($statusText as $key => $label)
                                                                     <option value="{{ $key }}"
@@ -82,15 +94,10 @@
                                                                 <i class="fa fa-eye"></i> Xem chi tiết
                                                             </button>
                                                         </td>
-                                                        <td class="text-center">
-                                                            <button class="btn btn-danger btn-sm btn-delete-ticket"
-                                                                @disabled($ticket->status === 'used') data-id="{{ $ticket->id }}"
-                                                                data-url="{{ route('admin.tickets.delete', $ticket->id) }}">
-                                                                <i class="fa fa-trash"></i> Xóa
-                                                            </button>
-                                                        </td>
                                                     </tr>
                                                 @endforeach
+                                            </tbody>
+                                            @endforeach
                                             </tbody>
                                         </table>
                                     </div>

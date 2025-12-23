@@ -37,10 +37,10 @@
                                             style="width: 100%;">
                                             <thead>
                                                 <tr>
-                                                    <th>Tên điểm</th>
-                                                    <th>Thành phố</th>
-                                                    <th>Địa chỉ</th>
-                                                    <th>Tỉnh/Thành</th>
+                                                    <th class="text-center align-middle">Tên điểm</th>
+                                                    <th class="text-center align-middle">Thành phố</th>
+                                                    <th class="text-center align-middle">Địa chỉ</th>
+                                                    <th class="text-center align-middle">Tỉnh/Thành</th>
                                                     <th></th>
                                                     <th></th>
                                                 </tr>
@@ -49,22 +49,25 @@
                                             <tbody>
                                                 @foreach ($locations as $l)
                                                     <tr id="location-row-{{ $l->id }}">
-                                                        <td>{{ $l->name }}</td>
-                                                        <td>{{ $l->city }}</td>
-                                                        <td>{{ $l->address }}</td>
-                                                        <td>{{ $l->province }}</td>
+                                                        <td class="text-center align-middle">{{ $l->name }}</td>
+                                                        <td class="text-center align-middle">{{ $l->city }}</td>
+                                                        <td class="text-center align-middle">{{ $l->address }}</td>
+                                                        <td class="text-center align-middle">{{ $l->province }}</td>
 
-                                                        <td style="display: flex; justify-content: center">
-                                                            <a class="btn btn-app btn-update-location" data-toggle="modal"
-                                                                data-target="#modalUpdate-{{ $l->id }}">
+                                                        <td class="text-center">
+                                                            <a class="btn btn-success btn-sm btn-update-location"
+                                                                data-toggle="modal"
+                                                                data-target="#modalUpdate-{{ $l->id }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-edit"></i>Chỉnh sửa
                                                             </a>
                                                         </td>
 
-                                                        <td style="display: flex; justify-content: center">
-                                                            <a class="btn btn-app btn-delete-location"
+                                                        <td class="text-center">
+                                                            <a class="btn btn-danger btn-sm btn-delete-location"
                                                                 data-id="{{ $l->id }}"
-                                                                data-delete-url="{{ route('admin.locations.delete', $l->id) }}">
+                                                                data-delete-url="{{ route('admin.locations.delete', $l->id) }}"
+                                                                style="color: #fff">
                                                                 <i class="fa fa-trash"></i> Xóa
                                                             </a>
                                                         </td>

@@ -7,40 +7,56 @@ use App\Models\Location;
 use App\Models\Operator;
 use App\Models\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RouteAdminController extends Controller
 {
     public function index()
     {
-        $routes = Route::with(['origin', 'destination', 'operator'])->get();
+        $admin = Auth::guard('admin')->user();
+
+        $routes = Route::with(['origin', 'destination'])
+            ->where('operator_id', $admin->operator_id)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
         $locations = Location::all();
-        $operators = Operator::all();
-        return view('admin.pages.routes', compact('routes', 'locations', 'operators'));
+
+        return view('admin.pages.routes', compact('routes', 'locations'));
     }
 
     public function update(Request $request, $id)
     {
-        $route = Route::findOrFail($id);
+        $admin = Auth::guard('admin')->user();
 
-        $request->validate([
-            'origin_location_id' => 'required|exists:locations,id',
+        $route = Route::where('operator_id', $admin->operator_id)
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'origin_location_id' => 'required|exists:locations,id|different:destination_location_id',
             'destination_location_id' => 'required|exists:locations,id',
-            'operator_id' => 'required|exists:operators,id',
             'distance' => 'required|numeric|min:1',
             'description' => 'nullable|string|max:255',
+        ], [
+            'origin_location_id.different' => 'Điểm đi và điểm đến không được trùng nhau',
+            'distance.min' => 'Khoảng cách phải lớn hơn 0',
         ]);
 
-        $route->update($request->all());
+        $route->update([
+            'origin_location_id' => $validated['origin_location_id'],
+            'destination_location_id' => $validated['destination_location_id'],
+            'distance' => $validated['distance'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
-        $route->load(['origin', 'destination', 'operator']);
+        $route->load(['origin', 'destination']);
 
         return response()->json([
             'success' => true,
-            'message' => 'Tuyến đường được cập nhật thành công.',
+            'message' => 'Cập nhật tuyến đường thành công',
             'data' => [
-                'origin_name' => $route->origin->name ?? '---',
-                'destination_name' => $route->destination->name ?? '---',
-                'operator_name' => $route->operator->name ?? '---',
+                'origin_name' => $route->origin->name,
+                'destination_name' => $route->destination->name,
                 'distance' => $route->distance,
                 'description' => $route->description,
             ]
@@ -49,46 +65,60 @@ class RouteAdminController extends Controller
 
     public function delete($id)
     {
-        $route = Route::findOrFail($id);
+        $admin = Auth::guard('admin')->user();
+
+        $route = Route::where('operator_id', $admin->operator_id)
+            ->findOrFail($id);
 
         try {
             $route->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Tuyến đường đã được xóa thành công.'
+                'message' => 'Xóa tuyến đường thành công'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Xóa tuyến đường thất bại.'
-            ]);
+                'message' => 'Không thể xóa tuyến đường do đã phát sinh dữ liệu'
+            ], 422);
         }
     }
 
     public function showFormAdd()
     {
+        $admin = Auth::guard('admin')->user();
+
         $locations = Location::all();
-        $operators = Operator::all();
-        return view('admin.pages.route-add', compact('locations', 'operators'));
+
+        return view('admin.pages.route-add', compact('locations', 'admin'));
     }
 
     public function add(Request $request)
     {
-        $request->validate([
-            'origin_location_id' => 'required|exists:locations,id',
+        $admin = Auth::guard('admin')->user();
+
+        $validated = $request->validate([
+            'origin_location_id' => 'required|exists:locations,id|different:destination_location_id',
             'destination_location_id' => 'required|exists:locations,id',
-            'operator_id' => 'required|exists:operators,id',
             'distance' => 'required|numeric|min:1',
             'description' => 'nullable|string|max:255',
+        ], [
+            'origin_location_id.different' => 'Điểm đi và điểm đến không được trùng nhau',
+            'distance.min' => 'Khoảng cách phải lớn hơn 0',
         ]);
 
-        $route = Route::create($request->all());
-
-        $route->load(['origin', 'destination', 'operator']);
+        Route::create([
+            'origin_location_id' => $validated['origin_location_id'],
+            'destination_location_id' => $validated['destination_location_id'],
+            'operator_id' => $admin->operator_id, // 🔒 GÁN CỨNG
+            'distance' => $validated['distance'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Tuyến đường được thêm thành công.',
+            'message' => 'Thêm tuyến đường thành công'
         ]);
     }
 }

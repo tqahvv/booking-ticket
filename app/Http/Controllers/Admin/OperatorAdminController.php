@@ -10,7 +10,7 @@ class OperatorAdminController extends Controller
 {
     public function index()
     {
-        $operators = Operator::all();
+        $operators = Operator::orderBy('created_at', 'DESC')->get();
         return view('admin.pages.operators', compact('operators'));
     }
 

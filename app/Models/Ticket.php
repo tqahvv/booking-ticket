@@ -25,4 +25,10 @@ class Ticket extends Model
     {
         return $this->belongsTo(Booking::class);
     }
+
+    protected $casts = [
+        'valid_from' => 'datetime',
+        'valid_to'   => 'datetime',
+        'issued_at'  => 'datetime',
+    ];
 }

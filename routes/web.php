@@ -11,14 +11,19 @@ use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\Client\PostController;
 use App\Http\Controllers\Client\SearchController;
 use Illuminate\Support\Facades\Route;
+use OpenAI\Laravel\Facades\OpenAI;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', function () {
-    return view('client.pages.account');
+    return view('client.pages.about');
 });
 
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::get('/activate/{token}', [AuthController::class, 'activate'])->name('activate');
+Route::post('/resend-activation', [AuthController::class, 'resendActivation'])->name('resend.activation');
+Route::get('/check-activation', [AuthController::class, 'checkActivation'])->name('check.activation');
+
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -45,8 +50,6 @@ Route::post('/booking/store-customer-info', [BookingController::class, 'storeCus
 Route::get('/booking/payment', [BookingController::class, 'showPayment'])->name('booking.payment');
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.payment.process');
 Route::get('/booking/completed', [BookingController::class, 'completed'])->name('booking.completed');
-Route::get('/booking/bank-transfer', [BookingController::class, 'showBankTransfer'])->name('booking.bank-transfer');
-Route::post('/booking/bank-transfer/confirm', [BookingController::class, 'confirmBankTransfer'])->name('booking.bank-transfer.confirm');
 Route::post('/apply-promo', [BookingController::class, 'applyPromo'])->name('promo.apply');
 
 Route::get('/booking/vnpay-return', [BookingController::class, 'vnpayReturn'])->name('booking.vnpay-return');

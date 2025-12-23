@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ActivationMail;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -43,20 +47,114 @@ class AuthController extends Controller
             ], 422);
         }
 
+        $existingUser = User::where('email', $request->email)->first();
+
+        if ($existingUser) {
+            if ($existingUser->isPending()) {
+                return response()->json([
+                    'status' => 'pending',
+                    'message' => 'Tài khoản đã đăng ký và đang chờ kích hoạt'
+                ], 409);
+            }
+
+            return response()->json([
+                'status' => 'exists',
+                'message' => 'Email đã tồn tại'
+            ], 409);
+        }
+
+        $token = Str::random(64);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'address' => $request->address,
             'password' => Hash::make($request->password),
             'role_id' => 3,
-            'status' => 'active',
+            'activation_token' => $token,
+            'activation_token_created_at' => now(),
+            'status' => 'pending',
         ]);
+
+        Mail::to($user->email)->send(new ActivationMail($token, $user));
 
         return response()->json([
             'status' => 'success',
             'message' => 'Đăng ký thành công!',
-            'user' => $user
+        ]);
+    }
+
+    public function activate($token)
+    {
+        $user = User::where('activation_token', $token)->first();
+
+        if (!$user) {
+            return redirect()->route('login')
+                ->with('error', 'Link kích hoạt không hợp lệ');
+        }
+
+        if (Carbon::parse($user->activation_token_created_at)
+            ->addMinutes(15)
+            ->isPast()
+        ) {
+
+            return redirect()->route('login')
+                ->with('error', 'Link kích hoạt đã hết hạn, vui lòng gửi lại email kích hoạt');
+        }
+
+        $user->update([
+            'status' => 'active',
+            'activation_token' => null,
+            'activation_token_created_at' => null,
+        ]);
+
+        return redirect()->route('login')
+            ->with('success', 'Kích hoạt tài khoản thành công');
+    }
+
+    public function resendActivation(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Email không tồn tại'
+            ], 404);
+        }
+
+        if ($user->status === 'active') {
+            return response()->json([
+                'message' => 'Tài khoản đã được kích hoạt'
+            ], 409);
+        }
+
+        $token = Str::random(64);
+
+        $user->update([
+            'activation_token' => $token,
+            'activation_token_created_at' => now(),
+        ]);
+
+        Mail::to($user->email)->send(new ActivationMail($token, $user));
+
+        return response()->json([
+            'message' => 'Đã gửi lại email kích hoạt'
+        ]);
+    }
+
+    public function checkActivation(Request $request)
+    {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['active' => false]);
+        }
+
+        return response()->json([
+            'active' => $user->status === 'active'
         ]);
     }
 
@@ -86,7 +184,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($request->only('email', 'password'))) {
             $user = Auth::user();
-
+            /** @var \App\Models\User $user */
             if ($user->isBanned()) {
                 Auth::logout();
                 return response()->json([
