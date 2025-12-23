@@ -39,7 +39,6 @@
                                                     <th class="text-center align-middle">#</th>
                                                     <th class="text-center align-middle">Điểm đi</th>
                                                     <th class="text-center align-middle">Điểm đến</th>
-                                                    <th class="text-center align-middle">Nhà xe</th>
                                                     <th class="text-center align-middle">Khoảng cách (km)</th>
                                                     <th class="text-center align-middle">Mô tả</th>
                                                     <th></th>
@@ -54,8 +53,6 @@
                                                             {{ $route->origin->name ?? '---' }}</td>
                                                         <td class="text-center align-middle">
                                                             {{ $route->destination->name ?? '---' }}</td>
-                                                        <td class="text-center align-middle">
-                                                            {{ $route->operator->name ?? '---' }}</td>
                                                         <td class="text-center align-middle">{{ $route->distance }}</td>
                                                         <td class="text-center align-middle">{{ $route->description }}</td>
                                                         <td class="text-center">

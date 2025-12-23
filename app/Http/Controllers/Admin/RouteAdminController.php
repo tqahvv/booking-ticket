@@ -32,7 +32,7 @@ class RouteAdminController extends Controller
         $route = Route::where('operator_id', $admin->operator_id)
             ->findOrFail($id);
 
-        $validated = $request->validate([
+        $request->validate([
             'origin_location_id' => 'required|exists:locations,id|different:destination_location_id',
             'destination_location_id' => 'required|exists:locations,id',
             'distance' => 'required|numeric|min:1',
@@ -43,10 +43,10 @@ class RouteAdminController extends Controller
         ]);
 
         $route->update([
-            'origin_location_id' => $validated['origin_location_id'],
-            'destination_location_id' => $validated['destination_location_id'],
-            'distance' => $validated['distance'],
-            'description' => $validated['description'] ?? null,
+            'origin_location_id' => $request->origin_location_id,
+            'destination_location_id' => $request->destination_location_id,
+            'distance' => $request->distance,
+            'description' => $request->description,
         ]);
 
         $route->load(['origin', 'destination']);
@@ -70,19 +70,12 @@ class RouteAdminController extends Controller
         $route = Route::where('operator_id', $admin->operator_id)
             ->findOrFail($id);
 
-        try {
-            $route->delete();
+        $route->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Xóa tuyến đường thành công'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể xóa tuyến đường do đã phát sinh dữ liệu'
-            ], 422);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Xóa tuyến đường thành công'
+        ]);
     }
 
     public function showFormAdd()
@@ -111,7 +104,7 @@ class RouteAdminController extends Controller
         Route::create([
             'origin_location_id' => $validated['origin_location_id'],
             'destination_location_id' => $validated['destination_location_id'],
-            'operator_id' => $admin->operator_id, // 🔒 GÁN CỨNG
+            'operator_id' => $admin->operator_id,
             'distance' => $validated['distance'],
             'description' => $validated['description'] ?? null,
         ]);

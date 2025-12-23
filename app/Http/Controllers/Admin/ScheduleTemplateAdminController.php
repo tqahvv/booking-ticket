@@ -158,10 +158,6 @@ class ScheduleTemplateAdminController extends Controller
             'default_seats.max' => 'Số ghế không được vượt quá 60',
         ]);
 
-        if (!$admin->operator_id) {
-            abort(403, 'Bạn không có quyền tạo chuyến xe');
-        }
-
         $vehicleType = VehicleType::findOrFail($request->vehicle_type_id);
 
         if ($request->default_seats > $vehicleType->capacity_total) {
