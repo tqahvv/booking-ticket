@@ -60,7 +60,7 @@
 
     @include('client.partials.footer')
 
-    <div id="chat-widget">
+    {{-- <div id="chat-widget">
 
         <div id="chat-toggle">
             <i class="bi bi-chat-dots-fill"></i>
@@ -82,7 +82,7 @@
             </div>
         </div>
 
-    </div>
+    </div> --}}
 
     <!-- jQuery luôn đứng đầu -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
