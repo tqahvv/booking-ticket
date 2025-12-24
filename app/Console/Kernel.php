@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Console\Commands\CancelExpiredBookings;
 
 class Kernel extends ConsoleKernel
 {
@@ -12,7 +13,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('booking:cancel-expired')->everyMinute();
+        $schedule->command(CancelExpiredBookings::class)
+            ->everyMinute()
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
     }
 
     protected function commands()

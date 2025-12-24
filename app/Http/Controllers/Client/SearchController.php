@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\BookingPassenger;
 use Illuminate\Http\Request;
 use App\Models\Location;
 use App\Models\Operator;
@@ -102,6 +103,25 @@ class SearchController extends Controller
                 ->whereDate('departure_datetime', $date)
                 ->first();
 
+            $occupiedSeatsCount = 0;
+            if ($schedule) {
+                $occupiedSeatsCount = BookingPassenger::whereHas('booking', function ($q) use ($schedule) {
+                    $q->where('schedule_id', $schedule->id)
+                        ->where(function ($query) {
+                            $query->where('status', 'confirmed')
+                                ->orWhere(function ($sub) {
+                                    $sub->whereIn('status', ['pending', 'waiting_payment'])
+                                        ->where('expires_at', '>', now());
+                                });
+                        });
+                })->count();
+            }
+
+            $defaultSeats = $t->default_seats;
+            $realAvailableSeats = $schedule
+                ? ($schedule->total_seats - $occupiedSeatsCount)
+                : $defaultSeats;
+
             $departure = Carbon::parse($date . ' ' . $t->departure_time);
             $arrival = $departure->copy()->addMinutes($t->travel_duration_minutes);
 
@@ -119,7 +139,7 @@ class SearchController extends Controller
                 "operator" => $t->operator,
                 "vehicleType" => $t->vehicleType,
                 "base_fare" => $schedule->base_fare ?? $t->base_fare,
-                "seats_available" => $schedule->seats_available ?? $t->default_seats,
+                "seats_available" => $realAvailableSeats,
                 "departure_datetime" => $schedule->departure_datetime ?? $departure,
                 "arrival_datetime" => $schedule->arrival_datetime ?? $arrival,
                 "duration" => $durationText,

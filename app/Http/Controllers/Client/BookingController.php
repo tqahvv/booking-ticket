@@ -68,7 +68,18 @@ class BookingController extends Controller
                 ->whereDate('booking_date', $bookingDate);
         })->count();
 
-        $seatsAvailable = $schedule->seats_available;
+        $occupiedSeatsCount = BookingPassenger::whereHas('booking', function ($q) use ($schedule) {
+            $q->where('schedule_id', $schedule->id)
+                ->where(function ($query) {
+                    $query->where('status', 'confirmed')
+                        ->orWhere(function ($sub) {
+                            $sub->whereIn('status', ['pending', 'waiting_payment'])
+                                ->where('expires_at', '>', now());
+                        });
+                });
+        })->count();
+
+        $seatsAvailable = $schedule->total_seats - $occupiedSeatsCount;
 
         $seatsNeeded = $request->seats;
 
@@ -109,9 +120,15 @@ class BookingController extends Controller
 
         $bookedSeats = BookingPassenger::whereHas('booking', function ($q) use ($schedule) {
             $q->where('schedule_id', $schedule->id)
-                ->where('status', 'confirmed');
-        })->pluck('seat_number')->toArray();
-
+                ->whereIn('status', ['confirmed', 'pending', 'waiting_payment'])
+                ->where(function ($query) {
+                    $query->where('status', 'confirmed')
+                        ->orWhere('expires_at', '>', now());
+                });
+        })
+            ->where('status', '!=', 'cancelled')
+            ->pluck('seat_number')
+            ->toArray();
         $seatsAvailable = $schedule->seats_available;
 
         $seats = VehicleSeatTemplate::where('vehicle_type_id', $schedule->vehicle_type_id)
@@ -166,6 +183,7 @@ class BookingController extends Controller
             : explode(',', $request->selected_seats);
 
         $expectedSeats = (int) $request->seats;
+        $scheduleId = $request->schedule_id;
 
         if (count($seats) !== $expectedSeats) {
             return response()->json([
@@ -174,19 +192,61 @@ class BookingController extends Controller
             ], 422);
         }
 
-        session([
-            'selected_schedule_id' => $request->schedule_id,
-            'selected_pickup_id'   => $request->pickup_id,
-            'selected_dropoff_id'  => $request->dropoff_id,
-            'selected_seats'       => $seats,
-            'num_seats'            => $expectedSeats,
-            'total_price'          => $request->total_price,
-            'discount_amount'      => 0,
-            'final_price'          => $request->total_price,
-            'seat_selected_at'     => now(),
-        ]);
+        DB::beginTransaction();
+        try {
+            $isOccupied = BookingPassenger::whereIn('seat_number', $seats)
+                ->whereHas('booking', function ($q) use ($scheduleId) {
+                    $q->where('schedule_id', $scheduleId)
+                        ->whereIn('status', ['pending', 'waiting_payment', 'confirmed'])
+                        ->where('expires_at', '>', now());
+                })->exists();
 
-        return response()->json(['status' => 'ok']);
+            if ($isOccupied) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Ghế bạn chọn vừa có người khác giữ. Vui lòng chọn ghế khác!'
+                ], 422);
+            }
+
+            $booking = Booking::create([
+                'code' => 'BK-' . Str::upper(Str::random(6)),
+                'user_id' => Auth::id(),
+                'schedule_id' => $scheduleId,
+                'total_price' => $request->total_price,
+                'final_price' => $request->total_price,
+                'num_passengers' => $expectedSeats,
+                'status' => 'pending',
+                'booking_date' => now(),
+                'expires_at' => now()->addMinutes(3),
+            ]);
+
+            foreach ($seats as $seat) {
+                BookingPassenger::create([
+                    'booking_id' => $booking->id,
+                    'seat_number' => $seat,
+                    'pickup_stop_id' => $request->pickup_id,
+                    'dropoff_stop_id' => $request->dropoff_id,
+                    'status' => 'pending'
+                ]);
+            }
+
+            session([
+                'current_booking_id' => $booking->id,
+                'selected_schedule_id' => $scheduleId,
+                'selected_pickup_id' => $request->pickup_id,
+                'selected_dropoff_id' => $request->dropoff_id,
+                'selected_seats' => $seats,
+                'total_price' => $request->total_price,
+                'final_price' => $request->total_price,
+                'discount_amount' => 0,
+            ]);
+
+            DB::commit();
+            return response()->json(['status' => 'ok', 'redirect' => route('booking.customerInfo')]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => 'Lỗi hệ thống: ' . $e->getMessage()], 500);
+        }
     }
 
     public function showCustomerInfo(Request $request)
@@ -244,76 +304,33 @@ class BookingController extends Controller
 
     public function storeCustomerInfo(Request $request)
     {
-        $request->validate([
-            'passenger_name' => 'required|string|max:255',
-            'passenger_phone' => 'required|string|max:20',
-            'passenger_email' => 'required|email|max:255',
-            'schedule_id' => 'required|integer|exists:schedules,id',
-            'pickup_id' => 'required|integer',
-            'dropoff_id' => 'required|integer',
-            'selected_seats' => 'required|string',
-            'total_price' => 'required|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'final_price' => 'required|numeric|min:0',
-            'promotion_id' => 'nullable|integer|exists:promotions,id',
-        ]);
+        $bookingId = session('current_booking_id');
+        $booking = Booking::find($bookingId);
 
-        $userId = Auth::id() ?? null;
-
-        $selectedSeats = explode(',', $request->selected_seats);
-        $numSeats = count($selectedSeats);
-
-        $schedule = Schedule::findOrFail($request->schedule_id);
-
-        $originalPrice   = (float)$request->total_price;
-        $discountAmount  = (float)($request->discount_amount ?? 0);
-        $finalPrice      = (float)$request->final_price;
-        $promotionId     = $request->promotion_id ?? null;
-
-        $selectedSeats = explode(',', $request->selected_seats);
-        $expectedSeats = session('num_seats');
-
-        if (count($selectedSeats) !== (int)$expectedSeats) {
-            return back()->withErrors([
-                'error' => "Số ghế đã chọn không hợp lệ. Vui lòng chọn đúng {$expectedSeats} ghế."
-            ]);
+        if (!$booking || $booking->expires_at < now()) {
+            return redirect()->route('home')->with('error', 'Phiên giữ chỗ đã hết hạn, vui lòng chọn lại ghế.');
         }
 
         DB::beginTransaction();
         try {
-            $booking = Booking::create([
-                'code' => 'BK-' . Str::upper(Str::random(6)),
-                'user_id' => $userId,
-                'schedule_id' => $request->schedule_id,
-                'payment_method_id' => null,
-                'booking_date' => Carbon::now(),
-                'total_price' => $originalPrice,
-                'discount_amount' => $discountAmount,
-                'final_price' => $finalPrice,
-                'num_passengers' => $numSeats,
-                'promotion_id' => $promotionId,
-                'status' => 'pending',
-                'currency' => 'VND',
-                'expires_at' => now()->addMinutes(15),
+            $booking->update([
+                'promotion_id' => $request->promotion_id,
+                'discount_amount' => $request->discount_amount ?? 0,
+                'final_price' => $request->final_price,
+                'expires_at' => now()->addMinutes(5),
             ]);
 
-            foreach ($selectedSeats as $seat) {
-                BookingPassenger::create([
-                    'booking_id' => $booking->id,
-                    'passenger_name' => $request->passenger_name,
-                    'passenger_phone' => $request->passenger_phone,
-                    'passenger_email' => $request->passenger_email,
-                    'seat_number' => $seat,
-                    'pickup_stop_id' => $request->pickup_id,
-                    'dropoff_stop_id' => $request->dropoff_id,
-                ]);
-            }
+            $booking->passengers()->update([
+                'passenger_name' => $request->passenger_name,
+                'passenger_phone' => $request->passenger_phone,
+                'passenger_email' => $request->passenger_email,
+            ]);
 
             DB::commit();
             return redirect()->route('booking.payment', ['booking_id' => $booking->id]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Có lỗi xảy ra: ' . $e->getMessage()]);
         }
     }
 
@@ -371,6 +388,10 @@ class BookingController extends Controller
         if ($booking->expires_at && now()->greaterThan($booking->expires_at)) {
             return redirect()->route('home')
                 ->withErrors(['error' => 'Đơn đặt vé đã hết hạn. Vui lòng đặt lại.']);
+        }
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->route('home')->withErrors(['error' => 'Đơn hàng đã bị hủy do hết thời gian giữ chỗ.']);
         }
 
         switch ($method->type) {
@@ -545,6 +566,10 @@ class BookingController extends Controller
         }
 
         $booking = $payment->booking;
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->route('home')->withErrors(['error' => 'Đơn hàng đã bị hủy do hết thời gian giữ chỗ.']);
+        }
 
         if ($request->vnp_ResponseCode == "00" && $request->vnp_TransactionStatus == "00") {
 

@@ -32,6 +32,30 @@
 <body>
     @include('client.partials.header')
 
+    @if (session('error'))
+        <div class="container mt-3">
+            <div class="alert alert-danger text-center">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
+
+    @if (session('warning'))
+        <div class="container mt-3">
+            <div class="alert alert-warning text-center">
+                {{ session('warning') }}
+            </div>
+        </div>
+    @endif
+
+    @if (session('success'))
+        <div class="container mt-3">
+            <div class="alert alert-success text-center">
+                {{ session('success') }}
+            </div>
+        </div>
+    @endif
+
     @yield('content')
 
     @include('client.partials.footer')
@@ -57,6 +81,7 @@
                 </button>
             </div>
         </div>
+
     </div>
 
     <!-- jQuery luôn đứng đầu -->

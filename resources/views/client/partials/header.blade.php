@@ -3,9 +3,10 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-4 col-sm-4 col-6 header-top-left">
-                    <div id="logo">
-                        <a href="/"><img src="{{ asset('assets/client/img/logo.png') }}" alt=""
-                                title="" /></a>
+                    <div id="logo" class="logo-wrapper">
+                        <a href="/">
+                            <img src="{{ asset('assets/client/img/logoxe3.svg') }}" alt="xevenha">
+                        </a>
                     </div>
                 </div>
                 <div class="col-lg-8 col-sm-8 col-6 header-top-right d-flex align-items-center justify-content-end">
@@ -77,13 +78,13 @@
         <div class="container">
             <div class="row fullscreen align-items-center justify-content-between">
                 <div class="col-lg-6 col-md-6 banner-left text-center text-md-left">
-                    <h1 class="text-white">Đặt vé xe khách giá rẻ và nhiều tiện lợi trên Travelista</h1>
+                    <h1 class="text-white">Đặt vé xe khách giá rẻ và nhiều tiện lợi trên Xevenha</h1>
                     <p class="text-white">
-                        Đặt vé xe khách trực tuyến nhanh chóng, dễ dàng và an toàn với Travelista. Chúng tôi cung cấp
+                        Đặt vé xe khách trực tuyến nhanh chóng, dễ dàng và an toàn với Xevenha. Chúng tôi cung cấp
                         dịch vụ đặt vé xe khách đa dạng, từ các tuyến đường ngắn đến dài, với nhiều lựa chọn về hãng xe
                         và
                         giá cả hợp lý. Hãy trải nghiệm sự tiện lợi và tiết kiệm thời gian khi đặt vé xe khách qua
-                        Travelista ngay hôm nay!
+                        Xevenha ngay hôm nay!
                     </p>
                 </div>
             </div>

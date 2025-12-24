@@ -686,7 +686,6 @@ $(document).ready(function () {
                 schedule_id: scheduleId,
                 selected_seats: selectedSeats,
             }),
-            contentType: "application/json",
             headers: {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
@@ -713,12 +712,13 @@ $(document).ready(function () {
             return;
         }
 
-        const scheduleId = $("#schedule_id").val();
+        const scheduleId =
+            $('input[name="schedule_id"]').val() || $("#schedule_id").val();
         const pickupId = $("#pickup_id").val();
         const dropoffId = $("#dropoff_id").val();
 
-        let totalPriceText = $("#summary-total-fare").text() || "";
-        const totalPrice = totalPriceText.replace(/[^\d]/g, "") || 0;
+        let totalPriceText = $("#summary-total-fare").text() || "0";
+        const totalPrice = totalPriceText.replace(/[^\d]/g, "");
 
         if (!scheduleId || !pickupId || !dropoffId) {
             alert("Vui lòng chọn đầy đủ điểm đón và điểm trả!");
@@ -732,10 +732,9 @@ $(document).ready(function () {
                 schedule_id: scheduleId,
                 pickup_id: pickupId,
                 dropoff_id: dropoffId,
-                selected_seats: selectedSeats.join(","),
+                selected_seats: selectedSeats,
                 seats: selectedSeats.length,
                 total_price: totalPrice,
-                _token: $('meta[name="csrf-token"]').attr("content"),
             },
             headers: {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),

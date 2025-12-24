@@ -22,30 +22,34 @@ class CancelExpiredBookings extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Hủy các giao dịch quá hạn 15 phút';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $expiredBookings = Booking::whereIn('status', ['pending', 'waiting_payment'])
-            ->whereNotNull('expires_at')
+        Log::info('Lệnh hủy booking đang chạy lúc: ' . now());
+
+        $expiredBookings = Booking::with('schedule')
+            ->whereIn('status', ['pending', 'waiting_payment'])
             ->where('expires_at', '<', now())
             ->get();
 
+        if ($expiredBookings->isEmpty()) {
+            $this->info('Không có đơn hàng nào hết hạn.');
+            return;
+        }
+
         foreach ($expiredBookings as $booking) {
-
             DB::transaction(function () use ($booking) {
-
-                $booking->status = 'cancelled';
-                $booking->save();
-
-                BookingPassenger::where('booking_id', $booking->id)
-                    ->update(['status' => 'cancelled']);
-
-                Log::info("Booking {$booking->id} cancelled due to timeout");
+                $booking->update(['status' => 'cancelled']);
+                $booking->passengers()->update(['status' => 'cancelled']);
+                if ($booking->schedule) {
+                    $booking->schedule->increment('seats_available', $booking->num_passengers);
+                }
             });
+            $this->info("Đã hủy đơn hàng: {$booking->code}");
         }
     }
 }

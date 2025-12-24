@@ -82,131 +82,12 @@
         </div>
     </div>
 
-    {{-- <section class="popular-destination-area section-gap">
-        <div class="container">
-            <div class="row d-flex justify-content-center">
-                <div class="menu-content pb-70 col-lg-8">
-                    <div class="title text-center">
-                        <h1 class="mb-10">Các điểm đến phổ biến</h1>
-                        <p>Chúng tôi cung cấp các tuyến xe phổ biến cho mỗi chuyến đi của bạn.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                @foreach ($populars as $popular)
-                    <div class="col-lg-4">
-                        <div class="single-destination relative">
-                            <div class="thumb relative">
-                                <div class="overlay overlay-bg"></div>
-                                <img class="img-fluid" src="{{ $popular->url }}" alt="{{ $popular->alt_text }}">
-                            </div>
-                            <div class="desc">
-                                <a href="">Vé Xe Đi {{ $popular->alt_text }}</a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-    </section> --}}
-
-    {{-- <section class="price-area section-gap">
-        <div class="container">
-            <hr class="section-divider">
-            <div class="row d-flex justify-content-center">
-                <div class="menu-content pb-70 col-lg-8">
-                    <div class="title text-center">
-                        <h1 class="mb-10">Giá Vé Tuyến Phổ Biến</h1>
-                        <p>Cập nhật giá vé xe khách tốt nhất cho các tuyến đường phổ biến.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-lg-4">
-                    <div class="single-price price-box-custom">
-                        <div class="price-header-custom" style="background-image: url('URL_ANH_HA_NOI.jpg');">
-                            <p class="ticket-label">Vé xe khách từ</p>
-                            <h4 class="ticket-route">Hà Nội</h4>
-                            <span class="ticket-price-label">Giá từ:</span>
-                        </div>
-
-                        <ul class="price-list">
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Sài Gòn</a>
-                                <span class="price-value">1.058.000 <small>VND</small></span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Hải Phòng</a>
-                                <span class="price-value">115.000 <small>VND</small></span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Huế</a>
-                                <span class="price-value">402.500 <small>VND</small></span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="single-price price-box-custom">
-                        <div class="price-header-custom" style="background-image: url('URL_ANH_SAI_GON.jpg');">
-                            <p class="ticket-label">Vé xe khách từ</p>
-                            <h4 class="ticket-route">Sài Gòn</h4>
-                            <span class="ticket-price-label">Giá từ:</span>
-                        </div>
-
-                        <ul class="price-list">
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Đà Nẵng</a>
-                                <span class="price-value">517.500 <small>VND</small></span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Hà Nội</a>
-                                <span class="price-value">1.058.000 <small>VND</small></span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Đà Lạt</a>
-                                <span class="price-value">207.000 <small>VND</small></span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="single-price price-box-custom">
-                        <div class="price-header-custom" style="background-image: url('URL_ANH_DA_NANG.jpg');">
-                            <p class="ticket-label">Vé xe khách từ</p>
-                            <h4 class="ticket-route">Đà Nẵng</h4>
-                            <span class="ticket-price-label">Giá từ:</span>
-                        </div>
-
-                        <ul class="price-list">
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Sài Gòn</a>
-                                <span class="price-value">517.500 <small>VND</small></span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Quảng Ngãi</a>
-                                <span class="price-value">287.500 <small>VND</small></span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center">
-                                <a href="#" class="route-link">Gia Lai</a>
-                                <span class="price-value">284.400 <small>VND</small></span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section> --}}
-
     <section class="home-about-area" style="color: #222;">
         <hr class="section-divider">
         <div class="row d-flex justify-content-center">
             <div class="menu-content pb-70 col-lg-8">
                 <div class="title text-center">
-                    <h1 class="mb-10">Lý do nên lựa chọn đặt vé trên Travelista</h1>
+                    <h1 class="mb-10">Lý do nên lựa chọn đặt vé trên Xevenha</h1>
                 </div>
             </div>
         </div>
@@ -219,7 +100,7 @@
 
                 <div class="col-lg-5 col-md-8 col-sm-12 home-about-left">
                     <h1 style="font-size: 24px;">Tiện lợi</h1>
-                    <p style="max-width: 550px;">Với Travelista, bạn có thể đặt vé xe khách mọi lúc, mọi nơi chỉ với vài
+                    <p style="max-width: 550px;">Với Xevenha, bạn có thể đặt vé xe khách mọi lúc, mọi nơi chỉ với vài
                         thao tác đơn giản.
                         Không cần đến bến xe hay phòng vé, mọi thông tin đều được cung cấp đầy đủ và rõ ràng ngay trên hệ
                         thống.
@@ -233,7 +114,7 @@
                     <p style="max-width: 550px;">
                         Quy trình đặt vé được tối ưu giúp bạn tìm kiếm chuyến xe, chọn ghế và hoàn tất đặt vé chỉ trong vài
                         phút.
-                        Travelista giúp tiết kiệm thời gian và mang lại trải nghiệm đặt vé nhanh gọn, hiệu quả.
+                        Xevenha giúp tiết kiệm thời gian và mang lại trải nghiệm đặt vé nhanh gọn, hiệu quả.
                     </p>
                 </div>
 
@@ -252,7 +133,7 @@
                 <div class="col-lg-5 col-md-8 col-sm-12 home-about-left">
                     <h1 style="font-size: 24px;">Dễ dàng</h1>
                     <p style="max-width: 550px;">Giao diện thân thiện, dễ sử dụng phù hợp với mọi đối tượng người dùng.
-                        Ngay cả những người ít tiếp xúc với công nghệ vẫn có thể dễ dàng tìm kiếm và đặt vé trên Travelista.
+                        Ngay cả những người ít tiếp xúc với công nghệ vẫn có thể dễ dàng tìm kiếm và đặt vé trên Xevenha.
                     </p>
                 </div>
             </div>

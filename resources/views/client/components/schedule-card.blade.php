@@ -88,7 +88,7 @@
                             <i class="fa fa-money policy-icon"></i>
                             <div class="policy-text">
                                 <strong>Có thể hoàn trả</strong>
-                                <p>Để hủy vé và yêu cầu hoàn tiền, hãy liên hệ với Travelista.</p>
+                                <p>Để hủy vé và yêu cầu hoàn tiền, hãy liên hệ với Xevenha.</p>
                             </div>
                         </div>
                     </div>

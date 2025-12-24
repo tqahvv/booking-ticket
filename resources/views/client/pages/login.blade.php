@@ -6,7 +6,7 @@
 @section('content')
     <div class="register-fill d-flex justify-content-center align-items-center py-5">
         <div class="card p-4 shadow-lg" style="width: 420px; border-radius: 12px;">
-            <h3 class="text-center fw-bold">Chào mừng quay lại Travelista</h3>
+            <h3 class="text-center fw-bold">Chào mừng quay lại Xevenha</h3>
             <p class="text-center text-muted mb-4">
                 Đăng nhập tài khoản ngay để tiếp tục trải nghiệm dịch vụ
             </p>

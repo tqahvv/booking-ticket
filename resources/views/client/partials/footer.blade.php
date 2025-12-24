@@ -16,7 +16,7 @@
                     <div class="row">
                         <div class="col">
                             <ul>
-                                <li><a href="#">Giới thiệu về Travelista</a></li>
+                                <li><a href="#">Giới thiệu về Xevenha</a></li>
                                 <li><a href="#">Tuyển dụng</a></li>
                                 <li><a href="#">Tin tức</a></li>
                                 <li><a href="#">Liên hệ</a></li>
@@ -47,7 +47,7 @@
                 Bản quyền &copy;
                 <script>
                     document.write(new Date().getFullYear());
-                </script> Travelista | Đã đăng ký bản quyền
+                </script> Xevenha | Đã đăng ký bản quyền
             </p>
             <div class="col-lg-4 col-sm-12 footer-social">
                 <a href="#"><i class="fa fa-facebook"></i></a>
