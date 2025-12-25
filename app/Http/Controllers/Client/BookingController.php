@@ -55,6 +55,10 @@ class BookingController extends Controller
             ]
         );
 
+        if (Carbon::parse($schedule->departure_datetime)->isPast()) {
+            return redirect()->route('home')->with('error', 'Chuyến xe này đã khởi hành.');
+        }
+
         $departure = Carbon::parse($scheduleTemplate->departure_time);
         $arrival = $departure->copy()->addMinutes($scheduleTemplate->travel_duration_minutes);
         $durationMinutes = $scheduleTemplate->travel_duration_minutes;

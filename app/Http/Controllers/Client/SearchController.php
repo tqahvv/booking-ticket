@@ -18,15 +18,17 @@ class SearchController extends Controller
     {
         $from = trim($request->query('from', ''));
         $to = trim($request->query('to', ''));
-        $date = $request->query('date');
+        $date = $request->query('date', now()->format('Y-m-d'));
         $seats = (int) $request->query('seats', 1);
 
         Carbon::setLocale('vi');
 
         $formattedDate = null;
-        if ($date) {
+        try {
             $formattedDate = Carbon::parse($date)->isoFormat('dddd, D MMMM YYYY');
             $formattedDate = mb_convert_case($formattedDate, MB_CASE_TITLE, "UTF-8");
+        } catch (\Exception $e) {
+            $formattedDate = 'Ngày không hợp lệ';
         }
 
         $dataView = [
@@ -40,6 +42,11 @@ class SearchController extends Controller
             'dropoffPoints' => collect(),
             'operators' => collect(),
         ];
+
+        if ($date && Carbon::parse($date)->isPast() && !Carbon::parse($date)->isToday()) {
+            $dataView['message'] = 'Ngày đặt vé không hợp lệ (không thể đặt vé trong quá khứ)';
+            return view('client.pages.booking-home', $dataView);
+        }
 
         if (!$from || !$to) {
             return view('client.pages.booking-home', $dataView);
