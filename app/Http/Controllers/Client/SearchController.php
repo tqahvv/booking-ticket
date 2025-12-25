@@ -29,14 +29,20 @@ class SearchController extends Controller
             $formattedDate = mb_convert_case($formattedDate, MB_CASE_TITLE, "UTF-8");
         }
 
+        $dataView = [
+            'schedules' => collect(),
+            'from' => $from,
+            'to' => $to,
+            'date' => $date,
+            'seats' => $seats,
+            'formattedDate' => $formattedDate,
+            'pickupPoints' => collect(),
+            'dropoffPoints' => collect(),
+            'operators' => collect(),
+        ];
+
         if (!$from || !$to) {
-            return view('client.pages.booking-home', [
-                'schedules' => collect(),
-                'from' => $from,
-                'to' => $to,
-                'date' => $date,
-                'seats' => $seats,
-            ]);
+            return view('client.pages.booking-home', $dataView);
         }
 
         $origin = Location::where('name', 'like', "%{$from}%")
@@ -48,29 +54,20 @@ class SearchController extends Controller
             ->first();
 
         if (!$origin || !$destination) {
-            return view('client.pages.booking-home', [
-                'schedules' => collect(),
-                'from' => $from,
-                'to' => $to,
-                'date' => $date,
-                'seats' => $seats,
-                'message' => 'Không tìm thấy điểm đi hoặc điểm đến',
-            ]);
+            $dataView['message'] = 'Không tìm thấy điểm đi hoặc điểm đến';
+            return view('client.pages.booking-home', $dataView);
         }
+
+        $dataView['pickupPoints'] = Location::where('city', $origin->city)->get();
+        $dataView['dropoffPoints'] = Location::where('city', $destination->city)->get();
 
         $routes = Route::where('origin_location_id', $origin->id)
             ->where('destination_location_id', $destination->id)
             ->pluck('id');
 
         if ($routes->isEmpty()) {
-            return view('client.pages.booking-home', [
-                'schedules' => collect(),
-                'message' => 'Không có tuyến đường nào giữa hai điểm này',
-                'from' => $from,
-                'to' => $to,
-                'date' => $date,
-                'seats' => $seats,
-            ]);
+            $dataView['message'] = 'Không có tuyến đường nào giữa hai điểm này';
+            return view('client.pages.booking-home', $dataView);
         }
 
         $weekday = Carbon::parse($date)->dayOfWeekIso;
@@ -87,18 +84,11 @@ class SearchController extends Controller
             ->get();
 
         if ($templates->isEmpty()) {
-            return view('client.pages.booking-home', [
-                'schedules' => collect(),
-                'message' => 'Không có chuyến xe nào trong ngày này',
-                'from' => $from,
-                'to' => $to,
-                'date' => $date,
-                'seats' => $seats,
-                'formattedDate' => $formattedDate,
-            ]);
+            $dataView['message'] = 'Không có chuyến xe nào trong ngày này';
+            return view('client.pages.booking-home', $dataView);
         }
 
-        $schedules = $templates->map(function ($t) use ($date) {
+        $dataView['schedules'] = $templates->map(function ($t) use ($date) {
             $schedule = Schedule::where('schedule_template_id', $t->id)
                 ->whereDate('departure_datetime', $date)
                 ->first();
@@ -139,28 +129,16 @@ class SearchController extends Controller
                 "operator" => $t->operator,
                 "vehicleType" => $t->vehicleType,
                 "base_fare" => $schedule->base_fare ?? $t->base_fare,
-                "seats_available" => $realAvailableSeats,
+                "seats_available" => $realAvailableSeats ?? $t->default_seats,
                 "departure_datetime" => $schedule->departure_datetime ?? $departure,
                 "arrival_datetime" => $schedule->arrival_datetime ?? $arrival,
                 "duration" => $durationText,
             ];
         });
 
-        $pickupPoints = Location::where('city', $origin->city)->get();
-        $dropoffPoints = Location::where('city', $destination->city)->get();
-        $operators = $templates->pluck('operator')->unique('id')->values();
+        $dataView['operators'] = $templates->pluck('operator')->unique('id')->values();
 
-        return view('client.pages.booking-home', [
-            'schedules' => $schedules,
-            'from' => $from,
-            'to' => $to,
-            'date' => $date,
-            'seats' => $seats,
-            'formattedDate' => $formattedDate,
-            'pickupPoints' => $pickupPoints,
-            'dropoffPoints' => $dropoffPoints,
-            'operators' => $operators,
-        ]);
+        return view('client.pages.booking-home', $dataView);
     }
 
     public function filterAjax(Request $request)

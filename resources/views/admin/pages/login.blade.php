@@ -105,8 +105,8 @@
                             <br />
 
                             <div>
-                                <h1><i class="fa fa-paw"></i> TRAVELISTA</h1>
-                                <p>Chào mừng bạn đến với trang quản trị của VEGGIE SHOP! Hãy đăng nhập để vào trang quản
+                                <h1><i class="fa fa-paw"></i> XEVENHA</h1>
+                                <p>Chào mừng bạn đến với trang quản trị của XEVENHA! Hãy đăng nhập để vào trang quản
                                     trị nhé!!!</p>
                             </div>
                         </div>
